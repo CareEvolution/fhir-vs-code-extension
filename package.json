@@ -24,7 +24,12 @@
       {
         "command": "fhirResources.item_clicked",
         "title": "Go to FHIR resource"
+      },
+      {
+        "command": "fhir-extension.compareWith",
+        "title": "FHIR compare with..."
       }
+
     ],
     "views": {
       "explorer": [

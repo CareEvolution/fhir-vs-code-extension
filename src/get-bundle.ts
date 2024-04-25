@@ -9,6 +9,10 @@ export function getBundle() {
   }
 
   const document = activeTextEditor.document;
+  return getBundleFromDocument(document);
+}
+
+export function getBundleFromDocument(document: vscode.TextDocument) {
   const documentText = document.getText();
   const documentFileName = document.fileName;
 
