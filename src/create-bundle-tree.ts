@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { getBundle } from './get-bundle';
-import { Bundle, FhirResource, Resource } from 'fhir/r4';
+import { Bundle, FhirResource } from 'fhir/r4';
 
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
 
   constructor() {
     // Register a listener for changes to the active text editor
     vscode.window.onDidChangeActiveTextEditor(this.refresh, this);
+    vscode.commands.registerCommand('fhirResources.item_clicked', r => this.handleTreeItemClick(r));
   }
 
   refresh(): void {
@@ -32,6 +33,20 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       }
     }
   }
+
+  // Method to handle item click
+  handleTreeItemClick(node: FhirResourceTreeItem) {
+    if (node.collapsibleState !== vscode.TreeItemCollapsibleState.None) { return; }
+
+    const activeEditor = vscode.window.activeTextEditor;
+    if (!activeEditor) { return; }
+
+    const position = new vscode.Position(node.lineNumber, 0); // 0-indexed line number
+    const otherPosition = new vscode.Position(node.lineNumber+20, 0);
+    const range = new vscode.Range(position, otherPosition);
+    activeEditor.selection = new vscode.Selection(position, position);
+    activeEditor.revealRange(range);
+}
 
   private resourceTypes: {[id: string]: FhirResourceInfo[]} = {};
   private lineNumberDictionary: { [id: string]: {lineNumber: number; position: number} } = {};
@@ -124,6 +139,9 @@ class FhirResourceTreeItem extends vscode.TreeItem {
     this.tooltip = `${this.label}`;
     this.description = nChildren > 0 ? `(${nChildren})` : `(${lineNumber})`;
   }
+
+  // Method to handle click event
+  command = { command: 'fhirResources.item_clicked', title: '', arguments: [this] };
 
   // iconPath = {
   //   light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),

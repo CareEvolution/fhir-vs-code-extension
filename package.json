@@ -14,16 +14,16 @@
   "contributes": {
     "commands": [
       {
-        "command": "fhir-tools.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "fhir-extension.isBundle",
         "title": "Is FHIR Bundle"
       },
       {
         "command": "fhir-extension.minifyBundle",
         "title": "Minify Bundle"
+      },
+      {
+        "command": "fhirResources.item_clicked",
+        "title": "Go to FHIR resource"
       }
     ],
     "views": {

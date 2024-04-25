@@ -20,10 +20,12 @@ export function activate(context: vscode.ExtensionContext) {
   let minifyCommand = vscode.commands.registerCommand('fhir-extension.minifyBundle', minifyBundle);
   context.subscriptions.push(minifyCommand);
 
+  const bundleResourcesTreeProvider = new BundleResourcesTreeProvider();
   vscode.window.registerTreeDataProvider(
     'fhirResources',
-    new BundleResourcesTreeProvider()
+    bundleResourcesTreeProvider
   );
+
 }
 
 // This method is called when your extension is deactivated
