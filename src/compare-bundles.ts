@@ -1,4 +1,4 @@
-import { getBundle, getBundleFromDocument } from "./get-bundle";
+import { getActiveDocument } from "./get-bundle";
 import * as vscode from 'vscode';
 
 export async function compareBundles()
@@ -20,16 +20,12 @@ export async function compareBundles()
   const documentB = vscode.workspace.textDocuments.find( document => document.fileName === selectedItem.label);
   if (!documentB) { return; }
 
-  const bundleA = getBundle();
-  const bundleB = getBundleFromDocument(documentB);
-
-  // Get the diff
+  const documentA = getActiveDocument();
+  if (!documentA) { return; }
 
   // Open a new tab with bundleA on the left, bundleB on the right
+  vscode.window.showTextDocument(documentA, vscode.ViewColumn.One);
+  vscode.window.showTextDocument(documentB, vscode.ViewColumn.Two);
 
-  const selectedEditor = vscode.window.visibleTextEditors.find(editor => editor.document.fileName === selectedItem.label);
-  if (selectedEditor) {
-    vscode.window.showTextDocument(selectedEditor.document);
-  }
-
+  //await vscode.commands.executeCommand('vscode.diff', documentA.uri, documentB.uri, "FHIR Diff");
 }

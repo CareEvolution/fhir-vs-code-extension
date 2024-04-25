@@ -1,18 +1,37 @@
 import { Bundle } from 'fhir/r4';
 import * as vscode from 'vscode';
 
-export function getBundle() {
-  const activeTextEditor = vscode.window.activeTextEditor;
-  if (!activeTextEditor) {
-    vscode.window.showInformationMessage('There is no open file');
-    return null;
-  }
+export function getAllVisibleBundles(): { json: Bundle; fileName: string;}[] {
+  const bundles: { json: Bundle; fileName: string;}[] = [];
+  vscode.window.visibleTextEditors.forEach( editor => {
+    const document = editor.document;
+    const bundle = getBundleFromDocument(document);
+    if (bundle) {
+      bundles.push(bundle);
+    }
+  });
+  return bundles;
+}
 
-  const document = activeTextEditor.document;
+export function getBundle(): { json: Bundle; fileName: string;} | undefined {
+  const document = getActiveDocument();
+  if (!document) { return; }
   return getBundleFromDocument(document);
 }
 
-export function getBundleFromDocument(document: vscode.TextDocument) {
+export function getActiveDocument(): vscode.TextDocument | undefined {
+  console.log(vscode.window.visibleTextEditors.length);
+  const activeTextEditor = vscode.window.activeTextEditor;
+  if (!activeTextEditor) {
+    vscode.window.showInformationMessage('There is no open file');
+    return;
+  }
+
+  const document = activeTextEditor.document;
+  return document;
+}
+
+export function getBundleFromDocument(document: vscode.TextDocument): { json: Bundle; fileName: string;} | undefined {
   const documentText = document.getText();
   const documentFileName = document.fileName;
 
@@ -23,7 +42,7 @@ export function getBundleFromDocument(document: vscode.TextDocument) {
     parsedContents = JSON.parse(documentText);
   } catch (jsonError) {
     vscode.window.showInformationMessage('File is NOT a FHIR bundle');
-    return null;
+    return;
   }
 
   // Parsed object is a FHIR resource bundle
@@ -32,5 +51,5 @@ export function getBundleFromDocument(document: vscode.TextDocument) {
   }
 
   vscode.window.showInformationMessage('File is NOT a FHIR bundle');
-  return null;
+  return;
 }

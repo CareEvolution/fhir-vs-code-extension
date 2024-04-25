@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getBundle } from './get-bundle';
+import { getAllVisibleBundles } from './get-bundle';
 import { Bundle, FhirResource } from 'fhir/r4';
 
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
@@ -25,9 +25,11 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         this.getResourceInstances(element.label)
       );
     } else {
-      const bundleInfo = getBundle();
-      if (bundleInfo) {
-        return Promise.resolve(this.getResourcesFromBundle(bundleInfo.json));
+      const bundles = getAllVisibleBundles();
+      if (bundles.length === 1) {
+        return Promise.resolve(this.getResourcesFromBundle(bundles[0].json));
+      } else if (bundles.length === 2) {
+        return Promise.resolve(this.getDiffTree(bundles[0].json, bundles[1].json));
       } else {
         return Promise.resolve([]);
       }
@@ -38,22 +40,28 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
   handleTreeItemClick(node: FhirResourceTreeItem) {
     if (node.collapsibleState !== vscode.TreeItemCollapsibleState.None) { return; }
 
-    const activeEditor = vscode.window.activeTextEditor;
-    if (!activeEditor) { return; }
+    if (node.isDiff) {
+      this.showResource(vscode.window.visibleTextEditors[0], node.lineNumberA);
+      this.showResource(vscode.window.visibleTextEditors[1], node.lineNumberB);
+    } else {
+      const activeEditor = vscode.window.activeTextEditor;
+      this.showResource(activeEditor, node.lineNumberA);
+    }
+  }
 
-    const position = new vscode.Position(node.lineNumber, 0); // 0-indexed line number
-    const otherPosition = new vscode.Position(node.lineNumber+20, 0);
+  private showResource(editor: vscode.TextEditor | undefined, lineNumber: number | undefined) {
+    if (!editor || !lineNumber) { return; }
+  
+    const position = new vscode.Position(lineNumber, 0); // 0-indexed line number
+    const otherPosition = new vscode.Position(lineNumber+20, 0);
     const range = new vscode.Range(position, otherPosition);
-    activeEditor.selection = new vscode.Selection(position, position);
-    activeEditor.revealRange(range);
-}
+    editor.selection = new vscode.Selection(position, position);
+    editor.revealRange(range);
+  }
 
   private resourceTypes: {[id: string]: FhirResourceInfo[]} = {};
   private lineNumberDictionary: { [id: string]: {lineNumber: number; position: number} } = {};
 
-  /**
-   * Given the path to package.json, read all its dependencies and devDependencies.
-   */
   private getResourcesFromBundle(json: Bundle): FhirResourceTreeItem[] {
 
     this.resourceTypes = {};
@@ -87,8 +95,6 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       }
     });
 
-
-
     // Create a dictionary with all the resources
     json.entry.forEach( entry => {
       const resource = entry.resource;
@@ -107,7 +113,13 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     // Order the resource types alphabetically
     const sortedResourceTypes = Object.keys(this.resourceTypes).sort();
     return sortedResourceTypes.map(resourceType => 
-      new FhirResourceTreeItem(resourceType, this.resourceTypes[resourceType].length, 0, vscode.TreeItemCollapsibleState.Collapsed));
+      new FhirResourceTreeItem(
+        resourceType, 
+        this.resourceTypes[resourceType].length, 
+        vscode.TreeItemCollapsibleState.Collapsed,
+        false
+      )
+    );
   }
 
   private getResourceInstances( resourceType: string ): FhirResourceTreeItem[] {
@@ -118,8 +130,17 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       .map( resourceInfo => {
         const resourceId = resourceInfo.resource.id || 'no ID';
         const lineNumberInfo = this.lineNumberDictionary[resourceId];
-        return new FhirResourceTreeItem(resourceId, 0, lineNumberInfo.lineNumber, vscode.TreeItemCollapsibleState.None);
+        return new FhirResourceTreeItem(
+          resourceId,
+          0,
+          vscode.TreeItemCollapsibleState.None,
+          false,
+          lineNumberInfo.lineNumber);
       });
+  }
+
+  private getDiffTree(bundleA: Bundle, bundleB: Bundle): FhirResourceTreeItem[] {
+    return [];
   }
 
   private _onDidChangeTreeData: vscode.EventEmitter<FhirResourceTreeItem | undefined | null | void> = 
@@ -130,23 +151,35 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
 class FhirResourceTreeItem extends vscode.TreeItem {
   constructor(
-    public readonly label: string,
+    public readonly label: string, // This is resourceType (branch) or id (leaf)
     public readonly nChildren: number,
-    public readonly lineNumber: number,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly isDiff: boolean,
+    public readonly lineNumberA?: number,
+    public readonly lineNumberB?: number,
   ) {
     super(label, collapsibleState);
     this.tooltip = `${this.label}`;
-    this.description = nChildren > 0 ? `(${nChildren})` : `(${lineNumber})`;
+
+    if (nChildren > 0) {
+      this.description = `(${nChildren})`;
+    } else {
+      if (isDiff) {
+        if (lineNumberA !== undefined && lineNumberB !== undefined) {
+          this.description = 'A and B';
+        } else if (lineNumberA !== undefined) {
+          this.description = 'A';
+        } else if (lineNumberB !== undefined) {
+          this.description = 'B';
+        }
+      } else {
+        this.description = '';
+      }
+    }
   }
 
   // Method to handle click event
   command = { command: 'fhirResources.item_clicked', title: '', arguments: [this] };
-
-  // iconPath = {
-  //   light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-  //   dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
-  // };
 }
 
 interface FhirResourceInfo {
