@@ -42,22 +42,36 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     if (node.collapsibleState !== vscode.TreeItemCollapsibleState.None) { return; }
 
     if (node.isDiff) {
-      this.showResource(vscode.window.visibleTextEditors[0], node.lineNumberA);
-      this.showResource(vscode.window.visibleTextEditors[1], node.lineNumberB);
+      this.clearHighlights(vscode.window.visibleTextEditors[0]);
+      this.clearHighlights(vscode.window.visibleTextEditors[1]);
+      this.showResource(vscode.window.visibleTextEditors[0], node.lineNumberA, node.endLineNumberA);
+      this.showResource(vscode.window.visibleTextEditors[1], node.lineNumberB, node.endLineNumberB);
     } else {
       const activeEditor = vscode.window.activeTextEditor;
-      this.showResource(activeEditor, node.lineNumberA);
+      this.clearHighlights(activeEditor);
+      this.showResource(activeEditor, node.lineNumberA, node.endLineNumberA);
     }
   }
 
-  private showResource(editor: vscode.TextEditor | undefined, lineNumber: number | undefined) {
-    if (!editor || !lineNumber) { return; }
+  private highlightDecorationType = vscode.window.createTextEditorDecorationType({
+    isWholeLine: true,
+    backgroundColor: 'rgba(255, 255, 0, 0.3)' // Yellow highlight
+  });
+
+  private clearHighlights(editor: vscode.TextEditor | undefined) {
+    editor?.setDecorations(this.highlightDecorationType, []); // Pass an empty array to remove all decorations
+  }
+
+  private showResource(editor: vscode.TextEditor | undefined, lineNumber: number | undefined, endLineNumber: number | undefined) {
+    if (!editor || !lineNumber || !endLineNumber) { return; }
   
     const position = new vscode.Position(lineNumber, 0); // 0-indexed line number
-    const otherPosition = new vscode.Position(lineNumber+20, 0);
+    const otherPosition = new vscode.Position(endLineNumber, 0);
     const range = new vscode.Range(position, otherPosition);
     editor.selection = new vscode.Selection(position, position);
-    editor.revealRange(range);
+    editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
+
+    editor.setDecorations(this.highlightDecorationType, [range]);
   }
 
   private resourceTypes: {[id: string]: FhirResourceInfo[]} = {};
@@ -83,9 +97,15 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       if (resource) {
         const resourceType = resource.resourceType as string;
         const resourceId = resource.id || 'No ID';
-        const lineNumber = this.lineNumberDictionaryA[resourceId]?.startLineNumber;
+        const lineNumbers = this.lineNumberDictionaryA[resourceId];
         if (resourceType){
-          const resourceInfo = { resourceType, resourceLabel: resource.id || 'No ID', isDiff: false, lineNumberA: lineNumber };
+          const resourceInfo = { 
+            resourceType, 
+            resourceLabel: resource.id || 'No ID', 
+            isDiff: false, 
+            lineNumberA: lineNumbers?.startLineNumber,
+            endLineNumberA: lineNumbers?.endLineNumber
+           };
           if (!this.resourceTypes.hasOwnProperty(resourceType)){
             this.resourceTypes[resourceType] = [ resourceInfo ];
           } else {
@@ -120,7 +140,9 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
           vscode.TreeItemCollapsibleState.None,
           resourceInfo.isDiff,
           resourceInfo.lineNumberA,
-          resourceInfo.lineNumberB);
+          resourceInfo.endLineNumberA,
+          resourceInfo.lineNumberB,
+          resourceInfo.endLineNumberB);
       });
   }
 
@@ -159,15 +181,15 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       if (!item.reference) { return; }
       const resource = bundleAResources[item.reference];
       const resourceId = resource.id || 'No ID';
-      const lineNumber = this.lineNumberDictionaryA[resourceId]?.startLineNumber;
-      this.addResourceToResourceTypes(resource, resourceId, true, lineNumber);
+      const lineNumbers = this.lineNumberDictionaryA[resourceId];
+      this.addResourceToResourceTypes(resource, resourceId, true, lineNumbers);
     });
     diffInfo.bundle2Only.forEach( item => {
       if (!item.reference) { return; }
       const resource = bundleBResources[item.reference];
       const resourceId = resource.id || 'No ID';
-      const lineNumber = this.lineNumberDictionaryB[resourceId]?.startLineNumber;
-      this.addResourceToResourceTypes(resource, resourceId, true, undefined, lineNumber);
+      const lineNumbers = this.lineNumberDictionaryB[resourceId];
+      this.addResourceToResourceTypes(resource, resourceId, true, undefined, lineNumbers);
     });
     diffInfo.common.forEach(item => {
       if (!item.bundle1.reference || !item.bundle2.reference) { return; }
@@ -175,12 +197,12 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const resourceB = bundleBResources[item.bundle2.reference];
       const resourceTypeA = resourceA.resourceType;
       const resourceTypeB = resourceB.resourceType;
-      const lineNumberA = this.lineNumberDictionaryA[resourceA.id || '']?.startLineNumber;
-      const lineNumberB = this.lineNumberDictionaryB[resourceB.id || '']?.startLineNumber;
+      const lineNumbersA = this.lineNumberDictionaryA[resourceA.id || ''];
+      const lineNumbersB = this.lineNumberDictionaryB[resourceB.id || ''];
       if (resourceTypeA === resourceTypeB) {
-        this.addResourceToResourceTypes(resourceA, 'Foo', true, lineNumberA, lineNumberB);
+        this.addResourceToResourceTypes(resourceA, 'Foo', true, lineNumbersA, lineNumbersB);
       } else {
-        this.addResourceToResourceTypes(resourceA, 'Foo', true, lineNumberA, lineNumberB, `${resourceTypeA} - ${resourceTypeB}`);
+        this.addResourceToResourceTypes(resourceA, 'Foo', true, lineNumbersA, lineNumbersB, `${resourceTypeA} - ${resourceTypeB}`);
       }
     });
 
@@ -196,10 +218,25 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     );
   }
 
-  private addResourceToResourceTypes(resource: FhirResource, resourceLabel: string, isDiff: boolean, lineNumberA?: number, lineNumberB?: number, resourceType?: string) {
+  private addResourceToResourceTypes(
+    resource: FhirResource, 
+    resourceLabel: string, 
+    isDiff: boolean, 
+    lineNumbersA?: { startLineNumber: number, endLineNumber: number }, 
+    lineNumbersB?: { startLineNumber: number, endLineNumber: number }, 
+    resourceType?: string
+  ) {
     resourceType = resourceType || resource.resourceType as string;
     if (resourceType) {
-      const resourceInfo = { resourceType, resourceLabel, isDiff, lineNumberA, lineNumberB };
+      const resourceInfo = { 
+        resourceType, 
+        resourceLabel, 
+        isDiff, 
+        lineNumberA: lineNumbersA?.startLineNumber,
+        endLineNumberA: lineNumbersA?.endLineNumber,
+        lineNumberB: lineNumbersB?.startLineNumber,
+        endLineNumberB: lineNumbersB?.endLineNumber,
+       };
       if (!this.resourceTypes.hasOwnProperty(resourceType)){
         this.resourceTypes[resourceType] = [ resourceInfo ];
       } else {
@@ -216,7 +253,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
     const lines = documentText?.split("\n");
 
-    const resourceStartString = "      \"resource\": {";
+    const resourceStartString = "    {";
     const resourceEndString = "    }";
     const searchString = "\"id\"";
     const searchStringLength = searchString.length;
@@ -268,7 +305,9 @@ class FhirResourceTreeItem extends vscode.TreeItem {
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly isDiff: boolean,
     public readonly lineNumberA?: number,
+    public readonly endLineNumberA?: number,
     public readonly lineNumberB?: number,
+    public readonly endLineNumberB?: number
   ) {
     super(label, collapsibleState);
     this.tooltip = `${this.label}`;
