@@ -28,6 +28,9 @@ export async function compareBundles()
   const documentA = getActiveDocument();
   if (!documentA) { return; }
 
+  // I'm reworking each document so that the resources and their properties are alphabetized.
+  // And then I'm opening them in side-by-side windows that scroll independently.
+  // How about opening them in a diff window?
   await openBundleInWindow(documentA, getJustTheFileName(documentA.fileName) || '', vscode.ViewColumn.One);
   await openBundleInWindow(documentB, selectedItem.label, vscode.ViewColumn.Two);
 }

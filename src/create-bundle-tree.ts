@@ -261,6 +261,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
     const lines = documentText?.split("\n");
 
+    // This is pretty hacky...I'm assuming that the file we're scanning is formatted in a particular way
+    // in order to find the boundaries of each resource.
     const resourceStartString = "    {";
     const resourceEndString = "    }";
     const searchString = "        \"id\"";
