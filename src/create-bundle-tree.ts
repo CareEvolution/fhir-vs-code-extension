@@ -101,7 +101,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         if (resourceType){
           const resourceInfo = { 
             resourceType, 
-            resourceLabel: resource.id || 'No ID', 
+            resourceLabel: resource.id?.slice(0,7) || 'No ID',
+            resourceId: resource.id || 'No ID',
             isDiff: false, 
             lineNumberA: lineNumbers?.startLineNumber,
             endLineNumberA: lineNumbers?.endLineNumber
@@ -119,7 +120,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     const sortedResourceTypes = Object.keys(this.resourceTypes).sort();
     return sortedResourceTypes.map(resourceType => 
       new FhirResourceTreeItem(
-        resourceType, 
+        resourceType,
+        '',
         this.resourceTypes[resourceType].length, 
         vscode.TreeItemCollapsibleState.Collapsed,
         false
@@ -133,9 +135,9 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     var resourceInstances = this.resourceTypes[resourceType];
     return resourceInstances
       .map( resourceInfo => {
-        const resourceId = resourceInfo.resourceLabel;
         return new FhirResourceTreeItem(
-          resourceId,
+          resourceInfo.resourceLabel,
+          resourceInfo.resourceId,
           0,
           vscode.TreeItemCollapsibleState.None,
           resourceInfo.isDiff,
@@ -180,16 +182,18 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     diffInfo.bundle1Only.forEach( item => {
       if (!item.reference) { return; }
       const resource = bundleAResources[item.reference];
-      const resourceId = resource.id || 'No ID';
+      const resourceLabel = resource.id?.slice(0,7) || 'No ID';
+      const resourceId = resource.id || '';
       const lineNumbers = this.lineNumberDictionaryA[resourceId];
-      this.addResourceToResourceTypes(resource, resourceId, true, lineNumbers);
+      this.addResourceToResourceTypes(resource, resourceLabel, resourceId, true, lineNumbers);
     });
     diffInfo.bundle2Only.forEach( item => {
       if (!item.reference) { return; }
       const resource = bundleBResources[item.reference];
-      const resourceId = resource.id || 'No ID';
+      const resourceLabel = resource.id?.slice(0,7) || 'No ID';
+      const resourceId = resource.id || '';
       const lineNumbers = this.lineNumberDictionaryB[resourceId];
-      this.addResourceToResourceTypes(resource, resourceId, true, undefined, lineNumbers);
+      this.addResourceToResourceTypes(resource, resourceLabel, resourceId, true, undefined, lineNumbers);
     });
     diffInfo.common.forEach(item => {
       if (!item.bundle1.reference || !item.bundle2.reference) { return; }
@@ -199,10 +203,11 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const resourceTypeB = resourceB.resourceType;
       const lineNumbersA = this.lineNumberDictionaryA[resourceA.id || ''];
       const lineNumbersB = this.lineNumberDictionaryB[resourceB.id || ''];
+      const resourceLabel = `${resourceA.id?.slice(0,7)} - ${resourceB.id?.slice(0,7)}`;
       if (resourceTypeA === resourceTypeB) {
-        this.addResourceToResourceTypes(resourceA, 'Foo', true, lineNumbersA, lineNumbersB);
+        this.addResourceToResourceTypes(resourceA, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB);
       } else {
-        this.addResourceToResourceTypes(resourceA, 'Foo', true, lineNumbersA, lineNumbersB, `${resourceTypeA} - ${resourceTypeB}`);
+        this.addResourceToResourceTypes(resourceA, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB, `${resourceTypeA} - ${resourceTypeB}`);
       }
     });
 
@@ -210,7 +215,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     const sortedResourceTypes = Object.keys(this.resourceTypes).sort();
     return sortedResourceTypes.map(resourceType => 
       new FhirResourceTreeItem(
-        resourceType, 
+        resourceType,
+        '',
         this.resourceTypes[resourceType].length, 
         vscode.TreeItemCollapsibleState.Collapsed,
         false
@@ -221,6 +227,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
   private addResourceToResourceTypes(
     resource: FhirResource, 
     resourceLabel: string, 
+    resourceId: string,
     isDiff: boolean, 
     lineNumbersA?: { startLineNumber: number, endLineNumber: number }, 
     lineNumbersB?: { startLineNumber: number, endLineNumber: number }, 
@@ -229,8 +236,9 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     resourceType = resourceType || resource.resourceType as string;
     if (resourceType) {
       const resourceInfo = { 
-        resourceType, 
-        resourceLabel, 
+        resourceType,
+        resourceLabel,
+        resourceId,
         isDiff, 
         lineNumberA: lineNumbersA?.startLineNumber,
         endLineNumberA: lineNumbersA?.endLineNumber,
@@ -255,7 +263,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
     const resourceStartString = "    {";
     const resourceEndString = "    }";
-    const searchString = "\"id\"";
+    const searchString = "        \"id\"";
     const searchStringLength = searchString.length;
 
     let inResource = false;
@@ -271,11 +279,10 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
           resourceStartLineNumber = lineNumber;
         }
       } else if (!foundId) {
-        let index = line.indexOf(searchString);
-        if ( index > -1 ) {
+        if ( line.startsWith(searchString) ) {
           // I need to store the line and position of each resource
           // I need to get the resource id value, which will be the text between the next two \"'s.
-          const firstQuoteIndex = line.indexOf("\"", index + searchStringLength);
+          const firstQuoteIndex = line.indexOf("\"", searchStringLength);
           const secondQuoteIndex = line.indexOf("\"", firstQuoteIndex + 1);
           resourceId = line.slice(firstQuoteIndex + 1, secondQuoteIndex);
           foundId = true;
@@ -301,6 +308,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 class FhirResourceTreeItem extends vscode.TreeItem {
   constructor(
     public readonly label: string, // This is resourceType (branch) or id (leaf)
+    public readonly resourceId: string,
     public readonly nChildren: number,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly isDiff: boolean,
@@ -336,6 +344,7 @@ class FhirResourceTreeItem extends vscode.TreeItem {
 interface FhirResourceInfo {
   resourceType: string;
   resourceLabel: string;
+  resourceId: string;
   isDiff: boolean;
   lineNumberA?: number;
   endLineNumberA?: number;
