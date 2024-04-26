@@ -48,7 +48,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@careevolution/fhir-diff": "^0.0.0-hackathon003",
+    "@careevolution/fhir-diff": "^0.0.0-hackathon008",
     "@types/fhir": "^0.0.41",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
