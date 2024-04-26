@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
   let minifyCommand = vscode.commands.registerCommand('fhir-extension.minifyBundle', minifyBundle);
   context.subscriptions.push(minifyCommand);
 
-  let compareWithCommand = vscode.commands.registerCommand('fhir-extension.compareWith', compareBundles);
+  let compareWithCommand = vscode.commands.registerCommand('fhir-extension.compareWith', () => compareBundles(context));
   context.subscriptions.push(compareWithCommand);
 
   const bundleResourcesTreeProvider = new BundleResourcesTreeProvider();
