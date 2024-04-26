@@ -185,7 +185,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const resourceLabel = resource.id?.slice(0,7) || 'No ID';
       const resourceId = resource.id || '';
       const lineNumbers = this.lineNumberDictionaryA[resourceId];
-      this.addResourceToResourceTypes(resource, resourceLabel, resourceId, true, lineNumbers);
+      const resourceType = resource.resourceType as string;
+      this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, lineNumbers);
     });
     diffInfo.bundle2Only.forEach( item => {
       if (!item.reference) { return; }
@@ -193,7 +194,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const resourceLabel = resource.id?.slice(0,7) || 'No ID';
       const resourceId = resource.id || '';
       const lineNumbers = this.lineNumberDictionaryB[resourceId];
-      this.addResourceToResourceTypes(resource, resourceLabel, resourceId, true, undefined, lineNumbers);
+      const resourceType = resource.resourceType as string;
+      this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, undefined, lineNumbers);
     });
     diffInfo.common.forEach(item => {
       if (!item.bundle1.reference || !item.bundle2.reference) { return; }
@@ -205,9 +207,9 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const lineNumbersB = this.lineNumberDictionaryB[resourceB.id || ''];
       const resourceLabel = `${resourceA.id?.slice(0,7)} - ${resourceB.id?.slice(0,7)}`;
       if (resourceTypeA === resourceTypeB) {
-        this.addResourceToResourceTypes(resourceA, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB);
+        this.addResourceToResourceTypes(resourceTypeA, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB);
       } else {
-        this.addResourceToResourceTypes(resourceA, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB, `${resourceTypeA} - ${resourceTypeB}`);
+        this.addResourceToResourceTypes(`${resourceTypeA} - ${resourceTypeB}`, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB);
       }
     });
 
@@ -225,15 +227,13 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
   }
 
   private addResourceToResourceTypes(
-    resource: FhirResource, 
+    resourceType: string, 
     resourceLabel: string, 
     resourceId: string,
     isDiff: boolean, 
     lineNumbersA?: { startLineNumber: number, endLineNumber: number }, 
     lineNumbersB?: { startLineNumber: number, endLineNumber: number }, 
-    resourceType?: string
   ) {
-    resourceType = resourceType || resource.resourceType as string;
     if (resourceType) {
       const resourceInfo = { 
         resourceType,
