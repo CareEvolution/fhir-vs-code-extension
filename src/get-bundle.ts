@@ -23,7 +23,6 @@ export function getActiveDocument(): vscode.TextDocument | undefined {
   console.log(vscode.window.visibleTextEditors.length);
   const activeTextEditor = vscode.window.activeTextEditor;
   if (!activeTextEditor) {
-    vscode.window.showInformationMessage('There is no open file');
     return;
   }
 
@@ -41,7 +40,6 @@ export function getBundleFromDocument(document: vscode.TextDocument): { json: Bu
   try {
     parsedContents = JSON.parse(documentText);
   } catch (jsonError) {
-    vscode.window.showInformationMessage('File is NOT a FHIR bundle');
     return;
   }
 
@@ -50,6 +48,5 @@ export function getBundleFromDocument(document: vscode.TextDocument): { json: Bu
     return { json: parsedContents as Bundle, fileName: documentFileName };
   }
 
-  vscode.window.showInformationMessage('File is NOT a FHIR bundle');
   return;
 }

@@ -15,11 +15,11 @@
     "commands": [
       {
         "command": "fhir-extension.isBundle",
-        "title": "Is FHIR Bundle"
+        "title": "FHIR: Is FHIR Bundle"
       },
       {
         "command": "fhir-extension.minifyBundle",
-        "title": "Minify Bundle"
+        "title": "FHIR: Minify Bundle"
       },
       {
         "command": "fhirResources.item_clicked",
@@ -27,7 +27,7 @@
       },
       {
         "command": "fhir-extension.compareWith",
-        "title": "FHIR compare with..."
+        "title": "FHIR: Compare Active File With..."
       }
     ],
     "views": {
