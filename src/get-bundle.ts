@@ -13,7 +13,7 @@ export function getAllVisibleBundles(): { json: Bundle; fileName: string;}[] {
   return bundles;
 }
 
-export function getBundle(): { json: Bundle; fileName: string;} | undefined {
+export function getActiveBundle(): { json: Bundle; fileName: string;} | undefined {
   const document = getActiveDocument();
   if (!document) { return; }
   return getBundleFromDocument(document);

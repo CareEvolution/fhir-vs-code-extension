@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { getBundle } from './get-bundle';
+import { getActiveBundle } from './get-bundle';
 
 export function isFhirBundle() {
-  const bundle = getBundle();
+  const bundle = getActiveBundle();
   if (bundle) {
       vscode.window.showInformationMessage('File is a FHIR bundle');
   }

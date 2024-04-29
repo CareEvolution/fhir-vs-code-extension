@@ -1,9 +1,9 @@
-import { getBundle } from "./get-bundle";
+import { getActiveBundle } from "./get-bundle";
 import * as vscode from 'vscode';
 
 export async function minifyBundle()
 {
-  const bundleInfo = getBundle();
+  const bundleInfo = getActiveBundle();
   if (!bundleInfo) { return; }
   
   const minifiedBundle = JSON.stringify(bundleInfo.json);
