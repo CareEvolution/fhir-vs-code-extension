@@ -1,7 +1,7 @@
 {
   "name": "fhir-extension",
-  "displayName": "fhir-extension",
-  "description": "Tools for working with fhir bundles",
+  "displayName": "FHIR Tools",
+  "description": "Tools for working with FHIR bundles",
   "author": {
     "email": "info@careevolution.com",
     "name": "CareEvolution"

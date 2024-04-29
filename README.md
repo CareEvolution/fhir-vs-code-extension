@@ -1,4 +1,4 @@
-# fhir-extension README
+# FHIR Tools -- by CareEvolution
 
 This extension provides some tools for working with FHIR bundles.
 
@@ -17,11 +17,11 @@ In addition, this extension adds a tree view in the primary sidebar that shows y
 
 ## Requirements
 
-In order for resource highlighting to work well, you will want to format your FHIR bundle (Ctrl-K, Ctrl-F).
+To compare 2 FHIR bundles, have them both open in editor tabs. 
 
 ## Known Issues
 
-If your FHIR bundle is not well-formatted, the resource highlighting may be off.
+None currently.
 
 ## Release Notes
 
