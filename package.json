@@ -47,6 +47,9 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
+  "repository": {
+    "url": "https://github.com/CareEvolution/fhir-vs-code-extension"
+  },
   "devDependencies": {
     "@careevolution/fhir-diff": "^0.0.0-hackathon008",
     "@types/fhir": "^0.0.41",
