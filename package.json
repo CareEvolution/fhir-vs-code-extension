@@ -2,7 +2,7 @@
   "name": "fhir-extension",
   "displayName": "fhir-extension",
   "description": "Tools for working with fhir bundles",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -10,9 +10,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:json",
-    "onLanguage:jsonc",
-    "onStartupFinished"
+    "onLanguage:json"
   ],
   "main": "./out/extension.js",
   "contributes": {
