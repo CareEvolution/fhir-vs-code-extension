@@ -165,7 +165,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     });
     diffInfo.bundle2Only.forEach( item => {
       if (!item.reference) { return; }
-      const resource = bundleBResources[item.reference];
+      const resource = bundleBResources.hasOwnProperty(item.reference) ? bundleBResources[item.reference] : undefined;
       if (!resource) { return; }
       const resourceType = resource.resourceType as string;
       const resourceId = resource.id || '';
@@ -175,8 +175,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     });
     diffInfo.common.forEach(item => {
       if (!item.bundle1.reference || !item.bundle2.reference) { return; }
-      const resourceA = bundleAResources[item.bundle1.reference];
-      const resourceB = bundleBResources[item.bundle2.reference];
+      const resourceA = bundleAResources.hasOwnProperty(item.bundle1.reference) ? bundleAResources[item.bundle1.reference] : undefined;
+      const resourceB = bundleBResources.hasOwnProperty(item.bundle2.reference) ? bundleBResources[item.bundle2.reference] : undefined;
       if (!resourceA || !resourceB) { return; }
       const resourceTypeA = resourceA.resourceType;
       const resourceTypeB = resourceB.resourceType;
