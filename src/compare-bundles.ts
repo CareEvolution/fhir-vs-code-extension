@@ -7,22 +7,28 @@ import * as path from 'path';
 
 export async function compareBundles(context: vscode.ExtensionContext)
 {
-  // Get a bundle to compare to
-  const editorItems: vscode.QuickPickItem[] = vscode.workspace.textDocuments.map(document => {
-    const justTheFileName = path.parse(document.fileName).base;
-    return {
-        label: justTheFileName || '',
-        description: document.fileName
-    };
+  // Get a bundle to compare to - we offer up files in the open tabs
+  const tabGroups = vscode.window.tabGroups;
+  const editorItems: vscode.QuickPickItem[] = [];
+  tabGroups.all.forEach(tg => {
+    tg.tabs.forEach( t => {
+      const textDoc = t.input as vscode.TabInputText;
+      if (textDoc && t.label !== vscode.window.tabGroups.activeTabGroup.activeTab?.label) {
+        editorItems.push( {
+          label: t.label,
+          description: textDoc.uri.toString()
+        });
+      }
+    });
   });
 
   const selectedItem = await vscode.window.showQuickPick(editorItems, {
-    placeHolder: "Select a bundle to compare to"
+    placeHolder: 'Select a bundle to compare to'
   });
 
   if (!selectedItem){ return; }
 
-  const documentB = vscode.workspace.textDocuments.find( document => document.fileName === selectedItem.description);
+  const documentB = await vscode.workspace.openTextDocument(vscode.Uri.parse(selectedItem.description ?? ''));
   if (!documentB) { return; }
 
   const documentA = getActiveDocument();
@@ -32,12 +38,18 @@ export async function compareBundles(context: vscode.ExtensionContext)
   const orderedBundleA = createComparableBundle(documentA);
   const orderedBundleB = createComparableBundle(documentB);
 
+  if (!orderedBundleA || !orderedBundleB) {
+    vscode.window.showInformationMessage('Unable to compare these 2 files');
+    return;
+  }
+
   // And then I'm opening them in side-by-side windows that scroll independently.
-  await displayBundles(orderedBundleA, path.parse(documentA.fileName).base || '', orderedBundleB, selectedItem.label, context);
+  await displayBundles(orderedBundleA!, path.parse(documentA.fileName).base || '', orderedBundleB!, selectedItem.label, context);
 }
 
-function createComparableBundle(document: vscode.TextDocument): string {
+function createComparableBundle(document: vscode.TextDocument): string | undefined {
   const bundle = getBundleFromDocument(document);
+  if (!bundle) { return; }
 
   // Sort the bundle entries by resource type
   bundle?.json.entry?.sort((a: BundleEntry<FhirResource>, b: BundleEntry<FhirResource>) => {
