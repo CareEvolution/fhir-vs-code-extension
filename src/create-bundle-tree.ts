@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getAllVisibleBundles } from './get-bundle';
 import { Bundle, FhirResource } from 'fhir/r4';
 import { fhir_bundles_match } from '@careevolution/fhir-diff';
+var jsonMap = require('json-source-map');
 
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
 
@@ -260,39 +261,19 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     const documentText = document?.getText();
     if (!documentText) { return; }
 
-    // This is a bit hacky...I'm formatting the text in a specific way so that I can locate resource boundaries. If the
-    // incoming text has different line breaks, then the resource line numbers I come up with here will be a bit off.
-    const formattedText = JSON.stringify(JSON.parse(documentText), null, 2);
-    const resourceStartString = '    {';
-    const resourceEndString = '    }';
-    const idString = '        "id"';
-    const idStringLength = idString.length;
-
-    const lines = formattedText.split('\n');
-    let resourceStartLineNumber = -1;
-    let resourceId: string = ''; 
-
-    lines?.forEach((line, lineNumber) => {
-
-      if (resourceStartLineNumber === -1) {
-        if (line.startsWith(resourceStartString)) {
-          resourceStartLineNumber = lineNumber;
-        }
-      } else if (resourceId === '') {
-        if ( line.startsWith(idString) ) {
-          // I need to get the resource id value, which will be the text between the next two quotes.
-          const firstQuoteIndex = line.indexOf('"', idStringLength);
-          const secondQuoteIndex = line.indexOf('"', firstQuoteIndex + 1);
-          resourceId = line.slice(firstQuoteIndex + 1, secondQuoteIndex);
-        }
-      } else {
-        if (line.startsWith(resourceEndString)) {
-          lineNumberDictionary[resourceId] = { startLineNumber: resourceStartLineNumber, endLineNumber: lineNumber };
-          resourceStartLineNumber = -1;
-          resourceId = '';
-        }
-      }
-    });
+    const result = jsonMap.parse(documentText);
+    const jsonObject = result.data as Bundle;
+    if (!jsonObject.entry) { return; }
+    const nResources = jsonObject.entry?.length || 0;
+    for ( let ii = 0; ii < nResources; ii++) {
+      const resource = jsonObject.entry[ii].resource as FhirResource;
+      if (!resource) { continue; }
+      const resourceId = resource.id || '';
+      const pointers = result.pointers[`/entry/${ii}`];
+      const resourceStartLineNumber = pointers.value.line;
+      const resourceEndLineNumber = pointers.valueEnd.line;
+      lineNumberDictionary[resourceId] = { startLineNumber: resourceStartLineNumber, endLineNumber: resourceEndLineNumber };
+    }
   }
 
   private _onDidChangeTreeData: vscode.EventEmitter<FhirResourceTreeItem | undefined | null | void> = 

@@ -69,6 +69,7 @@
   },
   "dependencies": {
     "@careevolution/fhir-diff": "^0.0.0-hackathon008",
+    "json-source-map": "^0.6.1",
     "tmp": "^0.2.3"
   }
 }
