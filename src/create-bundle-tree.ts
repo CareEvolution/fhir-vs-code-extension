@@ -258,43 +258,37 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
   ) {
     
     const documentText = document?.getText();
+    if (!documentText) { return; }
 
-    const lines = documentText?.split("\n");
+    // This is a bit hacky...I'm formatting the text in a specific way so that I can locate resource boundaries. If the
+    // incoming text has different line breaks, then the resource line numbers I come up with here will be a bit off.
+    const formattedText = JSON.stringify(JSON.parse(documentText), null, 2);
+    const resourceStartString = '    {';
+    const resourceEndString = '    }';
+    const idString = '        "id"';
+    const idStringLength = idString.length;
 
-    // This is pretty hacky...I'm assuming that the file we're scanning is formatted in a particular way
-    // in order to find the boundaries of each resource.
-    const resourceStartString = "    {";
-    const resourceEndString = "    }";
-    const searchString = "        \"id\"";
-    const searchStringLength = searchString.length;
-
-    let inResource = false;
+    const lines = formattedText.split('\n');
     let resourceStartLineNumber = -1;
-    let foundId = false;
     let resourceId: string = ''; 
 
     lines?.forEach((line, lineNumber) => {
 
-      if (!inResource) {
+      if (resourceStartLineNumber === -1) {
         if (line.startsWith(resourceStartString)) {
-          inResource = true;
           resourceStartLineNumber = lineNumber;
         }
-      } else if (!foundId) {
-        if ( line.startsWith(searchString) ) {
-          // I need to store the line and position of each resource
-          // I need to get the resource id value, which will be the text between the next two \"'s.
-          const firstQuoteIndex = line.indexOf("\"", searchStringLength);
-          const secondQuoteIndex = line.indexOf("\"", firstQuoteIndex + 1);
+      } else if (resourceId === '') {
+        if ( line.startsWith(idString) ) {
+          // I need to get the resource id value, which will be the text between the next two quotes.
+          const firstQuoteIndex = line.indexOf('"', idStringLength);
+          const secondQuoteIndex = line.indexOf('"', firstQuoteIndex + 1);
           resourceId = line.slice(firstQuoteIndex + 1, secondQuoteIndex);
-          foundId = true;
         }
       } else {
         if (line.startsWith(resourceEndString)) {
           lineNumberDictionary[resourceId] = { startLineNumber: resourceStartLineNumber, endLineNumber: lineNumber };
-          inResource = false;
           resourceStartLineNumber = -1;
-          foundId = false;
           resourceId = '';
         }
       }

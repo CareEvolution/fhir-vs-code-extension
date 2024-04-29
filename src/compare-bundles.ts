@@ -3,7 +3,6 @@ import { getActiveDocument, getBundleFromDocument } from "./get-bundle";
 import * as vscode from 'vscode';
 import * as tmp from 'tmp';
 import * as fs from 'fs';
-import * as prettier from 'prettier';
 import * as path from 'path';
 
 export async function compareBundles(context: vscode.ExtensionContext)
@@ -30,14 +29,14 @@ export async function compareBundles(context: vscode.ExtensionContext)
   if (!documentA) { return; }
 
   // I'm reworking each document so that the resources and their properties are alphabetized.
-  const orderedBundleA = await createComparableBundle(documentA);
-  const orderedBundleB = await createComparableBundle(documentB);
+  const orderedBundleA = createComparableBundle(documentA);
+  const orderedBundleB = createComparableBundle(documentB);
 
   // And then I'm opening them in side-by-side windows that scroll independently.
   await displayBundles(orderedBundleA, path.parse(documentA.fileName).base || '', orderedBundleB, selectedItem.label, context);
 }
 
-async function createComparableBundle(document: vscode.TextDocument) {
+function createComparableBundle(document: vscode.TextDocument): string {
   const bundle = getBundleFromDocument(document);
 
   // Sort the bundle entries by resource type
@@ -60,10 +59,7 @@ async function createComparableBundle(document: vscode.TextDocument) {
 
   // Format the bundle - the tab width is important because we use it when getting line
   // numbers for the resources
-  const formattedBundle = await prettier.format(orderedBundle, {
-    parser: 'json',
-    tabWidth: 2,
-  });
+  const formattedBundle = JSON.stringify(JSON.parse(orderedBundle), null, 2);
 
   return formattedBundle;
 }
