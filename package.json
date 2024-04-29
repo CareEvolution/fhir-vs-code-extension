@@ -9,7 +9,11 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:json",
+    "onLanguage:jsonc",
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -51,7 +55,6 @@
     "url": "https://github.com/CareEvolution/fhir-vs-code-extension"
   },
   "devDependencies": {
-    "@careevolution/fhir-diff": "^0.0.0-hackathon008",
     "@types/fhir": "^0.0.41",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
@@ -62,7 +65,10 @@
     "@vscode/test-cli": "^0.0.8",
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.57.0",
-    "tmp": "^0.2.3",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@careevolution/fhir-diff": "^0.0.0-hackathon008",
+    "tmp": "^0.2.3"
   }
 }
