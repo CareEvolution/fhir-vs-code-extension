@@ -7,8 +7,10 @@ var jsonMap = require('json-source-map');
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
 
   constructor() {
-    // Register a listener for changes to the active text editor
+    // Register a listener for changes to the active text editor so that we can refresh the tree
     vscode.window.onDidChangeActiveTextEditor(this.refresh, this);
+
+    // Register the command that will be issued when the user clicks on a tree item
     vscode.commands.registerCommand('fhirResources.item_clicked', r => this.handleTreeItemClick(r));
   }
 
@@ -30,7 +32,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const bundles = getAllVisibleBundles();
       if (bundles.length === 1) {
         return Promise.resolve(this.getResourcesFromBundle(bundles[0].json));
-      } else if (bundles.length === 2) {
+      } else if (bundles.length > 1) {
         return Promise.resolve(this.getDiffTree(bundles[0].json, bundles[1].json));
       } else {
         return Promise.resolve([]);
@@ -63,15 +65,14 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     editor?.setDecorations(this.highlightDecorationType, []); // Pass an empty array to remove all decorations
   }
 
-  private showResource(editor: vscode.TextEditor | undefined, lineNumber: number | undefined, endLineNumber: number | undefined) {
-    if (!editor || !lineNumber || !endLineNumber) { return; }
+  private showResource(editor: vscode.TextEditor | undefined, startLineNumber: number | undefined, endLineNumber: number | undefined) {
+    if (!editor || !startLineNumber || !endLineNumber) { return; }
   
-    const position = new vscode.Position(lineNumber, 0); // 0-indexed line number
-    const otherPosition = new vscode.Position(endLineNumber, 0);
-    const range = new vscode.Range(position, otherPosition);
-    editor.selection = new vscode.Selection(position, position);
+    const startPosition = new vscode.Position(startLineNumber, 0);
+    const endPosition = new vscode.Position(endLineNumber, 0);
+    const range = new vscode.Range(startPosition, endPosition);
+    editor.selection = new vscode.Selection(startPosition, startPosition);
     editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
-
     editor.setDecorations(this.highlightDecorationType, [range]);
   }
 
@@ -97,23 +98,10 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const resource = entry.resource;
       if (resource) {
         const resourceType = resource.resourceType as string;
-        const resourceId = resource.id || 'No ID';
-        const lineNumbers = this.lineNumberDictionaryA[resourceId];
-        if (resourceType){
-          const resourceInfo = { 
-            resourceType, 
-            resourceLabel: resource.id?.slice(0,7) || 'No ID',
-            resourceId: resource.id || 'No ID',
-            isDiff: false, 
-            lineNumberA: lineNumbers?.startLineNumber,
-            endLineNumberA: lineNumbers?.endLineNumber
-           };
-          if (!this.resourceTypes.hasOwnProperty(resourceType)){
-            this.resourceTypes[resourceType] = [ resourceInfo ];
-          } else {
-            this.resourceTypes[resourceType].push( resourceInfo );
-          }
-        }
+        const resourceId = resource.id || '';
+        const resourceLabel = resourceId.slice(0,7) || resourceType;
+        const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
+        this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, false, lineNumbers);
       }
     });
 
@@ -133,7 +121,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
   private getResourceInstances( resourceType: string ): FhirResourceTreeItem[] {
 
     // Get the entries corresponding to the resource type
-    var resourceInstances = this.resourceTypes[resourceType];
+    var resourceInstances = this.resourceTypes.hasOwnProperty(resourceType) ? this.resourceTypes[resourceType] : [];
     return resourceInstances
       .map( resourceInfo => {
         return new FhirResourceTreeItem(
@@ -161,56 +149,46 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     this.fillLineNumberDictionary(vscode.window.visibleTextEditors[0].document, this.lineNumberDictionaryA);
     this.fillLineNumberDictionary(vscode.window.visibleTextEditors[1].document, this.lineNumberDictionaryB);
 
-    const bundleAResources: { [id: string]: FhirResource} = {};
-    bundleA.entry?.forEach(entry => {
-      const resource = entry.resource;
-      if (!resource) { return; }
+    const bundleAResources = this.getResourceDictionary(bundleA);
+    const bundleBResources = this.getResourceDictionary(bundleB);
 
-      const reference = `${resource.resourceType}/${resource.id}`;
-      bundleAResources[reference] = resource;
-    });
-
-    const bundleBResources: { [id: string]: FhirResource} = {};
-    bundleB.entry?.forEach(entry => {
-      const resource = entry.resource;
-      if (!resource) { return; }
-
-      const reference = `${resource.resourceType}/${resource.id}`;
-      bundleBResources[reference] = resource;
-    });
-
-    // Create a dictionary with all the resources
+    // Create a single dictionary with all the resources
     diffInfo.bundle1Only.forEach( item => {
       if (!item.reference) { return; }
-      const resource = bundleAResources[item.reference];
-      const resourceLabel = resource.id?.slice(0,7) || 'No ID';
-      const resourceId = resource.id || '';
-      const lineNumbers = this.lineNumberDictionaryA[resourceId];
+      const resource = bundleAResources.hasOwnProperty(item.reference) ? bundleAResources[item.reference] : undefined;
+      if (!resource) { return; }
       const resourceType = resource.resourceType as string;
+      const resourceId = resource.id || '';
+      const resourceLabel = resourceId.slice(0,7) || resourceType;
+      const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
       this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, lineNumbers);
     });
     diffInfo.bundle2Only.forEach( item => {
       if (!item.reference) { return; }
       const resource = bundleBResources[item.reference];
-      const resourceLabel = resource.id?.slice(0,7) || 'No ID';
-      const resourceId = resource.id || '';
-      const lineNumbers = this.lineNumberDictionaryB[resourceId];
+      if (!resource) { return; }
       const resourceType = resource.resourceType as string;
+      const resourceId = resource.id || '';
+      const resourceLabel = resourceId.slice(0,7) || resourceType;
+      const lineNumbers = this.lineNumberDictionaryB.hasOwnProperty(resourceId) ? this.lineNumberDictionaryB[resourceId] : undefined;
       this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, undefined, lineNumbers);
     });
     diffInfo.common.forEach(item => {
       if (!item.bundle1.reference || !item.bundle2.reference) { return; }
       const resourceA = bundleAResources[item.bundle1.reference];
       const resourceB = bundleBResources[item.bundle2.reference];
+      if (!resourceA || !resourceB) { return; }
       const resourceTypeA = resourceA.resourceType;
       const resourceTypeB = resourceB.resourceType;
-      const lineNumbersA = this.lineNumberDictionaryA[resourceA.id || ''];
-      const lineNumbersB = this.lineNumberDictionaryB[resourceB.id || ''];
-      const resourceLabel = `${resourceA.id?.slice(0,7)} - ${resourceB.id?.slice(0,7)}`;
+      const resourceAId = resourceA.id || '';
+      const resourceBId = resourceB.id || '';
+      const resourceLabel = `${resourceAId.slice(0,7) || resourceTypeA} - ${resourceBId.slice(0,7) || resourceTypeB}`;
+      const lineNumbersA = this.lineNumberDictionaryA.hasOwnProperty(resourceAId) ? this.lineNumberDictionaryA[resourceAId] : undefined;
+      const lineNumbersB = this.lineNumberDictionaryB.hasOwnProperty(resourceBId) ? this.lineNumberDictionaryB[resourceBId] : undefined;
       if (resourceTypeA === resourceTypeB) {
-        this.addResourceToResourceTypes(resourceTypeA, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB);
+        this.addResourceToResourceTypes(resourceTypeA, resourceLabel, '', true, lineNumbersA, lineNumbersB);
       } else {
-        this.addResourceToResourceTypes(`${resourceTypeA} - ${resourceTypeB}`, resourceLabel, 'Foo', true, lineNumbersA, lineNumbersB);
+        this.addResourceToResourceTypes(`${resourceTypeA} - ${resourceTypeB}`, resourceLabel, '', true, lineNumbersA, lineNumbersB);
       }
     });
 
@@ -222,9 +200,20 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         '',
         this.resourceTypes[resourceType].length, 
         vscode.TreeItemCollapsibleState.Collapsed,
-        false
+        true
       )
     );
+  }
+
+  private getResourceDictionary(bundle: Bundle): { [id: string]: FhirResource } {
+    const bundleResources: { [id: string]: FhirResource } = {};
+    bundle.entry?.forEach(entry => {
+      const resource = entry.resource;
+      if (!resource) { return; }
+      const reference = `${resource.resourceType}/${resource.id}`;
+      bundleResources[reference] = resource;
+    });
+    return bundleResources;
   }
 
   private addResourceToResourceTypes(
@@ -262,16 +251,19 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     if (!documentText) { return; }
 
     const result = jsonMap.parse(documentText);
+    if (!result || !result.data || !result.pointers) { return; }
     const jsonObject = result.data as Bundle;
-    if (!jsonObject.entry) { return; }
-    const nResources = jsonObject.entry?.length || 0;
+    if (!jsonObject?.entry) { return; }
+    const nResources = jsonObject.entry.length;
     for ( let ii = 0; ii < nResources; ii++) {
       const resource = jsonObject.entry[ii].resource as FhirResource;
       if (!resource) { continue; }
       const resourceId = resource.id || '';
-      const pointers = result.pointers[`/entry/${ii}`];
-      const resourceStartLineNumber = pointers.value.line;
-      const resourceEndLineNumber = pointers.valueEnd.line;
+      const pointerKey = `/entry/${ii}`;
+      const pointers = result.pointers.hasOwnProperty(pointerKey) ? result.pointers[pointerKey] : undefined;
+      if (!pointers) { continue; }
+      const resourceStartLineNumber = pointers.value?.line || 0;
+      const resourceEndLineNumber = pointers.valueEnd?.line || 0;
       lineNumberDictionary[resourceId] = { startLineNumber: resourceStartLineNumber, endLineNumber: resourceEndLineNumber };
     }
   }

@@ -4,13 +4,9 @@ import { minifyBundle } from './minify-bundle';
 import { BundleResourcesTreeProvider } from './create-bundle-tree';
 import { compareBundles } from './compare-bundles';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "fhir-tools" is now active!');
+  console.log('Extension "fhir-extension" is now active!');
 
   // Register commands
   let isBundleCommand = vscode.commands.registerCommand('fhir-extension.isBundle', isFhirBundle);
@@ -22,6 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
   let compareWithCommand = vscode.commands.registerCommand('fhir-extension.compareWith', () => compareBundles(context));
   context.subscriptions.push(compareWithCommand);
 
+  // Register tree data provider
   const bundleResourcesTreeProvider = new BundleResourcesTreeProvider();
   vscode.window.registerTreeDataProvider(
     'fhirResources',
@@ -30,5 +27,4 @@ export function activate(context: vscode.ExtensionContext) {
 
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}

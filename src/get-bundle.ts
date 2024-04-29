@@ -20,14 +20,7 @@ export function getActiveBundle(): { json: Bundle; fileName: string;} | undefine
 }
 
 export function getActiveDocument(): vscode.TextDocument | undefined {
-  console.log(vscode.window.visibleTextEditors.length);
-  const activeTextEditor = vscode.window.activeTextEditor;
-  if (!activeTextEditor) {
-    return;
-  }
-
-  const document = activeTextEditor.document;
-  return document;
+  return vscode.window.activeTextEditor?.document;
 }
 
 export function getBundleFromDocument(document: vscode.TextDocument): { json: Bundle; fileName: string;} | undefined {
@@ -35,7 +28,6 @@ export function getBundleFromDocument(document: vscode.TextDocument): { json: Bu
   const documentFileName = document.fileName;
 
   // First, is the text json?
-  // Parse the thing into objects
   let parsedContents;
   try {
     parsedContents = JSON.parse(documentText);

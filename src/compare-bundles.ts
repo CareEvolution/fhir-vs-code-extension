@@ -10,12 +10,12 @@ export async function compareBundles(context: vscode.ExtensionContext)
   // Get a bundle to compare to - we offer up files in the open tabs
   const tabGroups = vscode.window.tabGroups;
   const editorItems: vscode.QuickPickItem[] = [];
-  tabGroups.all.forEach(tg => {
-    tg.tabs.forEach( t => {
-      const textDoc = t.input as vscode.TabInputText;
-      if (textDoc && t.label !== vscode.window.tabGroups.activeTabGroup.activeTab?.label) {
+  tabGroups.all.forEach(tabGroup => {
+    tabGroup.tabs.forEach( tab => {
+      const textDoc = tab.input as vscode.TabInputText;
+      if (textDoc && tab.label !== vscode.window.tabGroups.activeTabGroup.activeTab?.label) {
         editorItems.push( {
-          label: t.label,
+          label: tab.label,
           description: textDoc.uri.toString()
         });
       }
@@ -39,7 +39,7 @@ export async function compareBundles(context: vscode.ExtensionContext)
   const orderedBundleB = createComparableBundle(documentB);
 
   if (!orderedBundleA || !orderedBundleB) {
-    vscode.window.showInformationMessage('Unable to compare these 2 files');
+    vscode.window.showErrorMessage('Unable to compare these 2 files');
     return;
   }
 
@@ -52,7 +52,7 @@ function createComparableBundle(document: vscode.TextDocument): string | undefin
   if (!bundle) { return; }
 
   // Sort the bundle entries by resource type
-  bundle?.json.entry?.sort((a: BundleEntry<FhirResource>, b: BundleEntry<FhirResource>) => {
+  bundle.json.entry?.sort((a: BundleEntry<FhirResource>, b: BundleEntry<FhirResource>) => {
     const aResourceType = a.resource?.resourceType;
     const bResourceType = b.resource?.resourceType;
     if (!aResourceType && !bResourceType) { return 0; }
@@ -67,13 +67,9 @@ function createComparableBundle(document: vscode.TextDocument): string | undefin
     ? sortFhirProperties(value) 
     : value;
 
-  const orderedBundle = JSON.stringify(bundle?.json, replacer);
+  const orderedBundle = JSON.stringify(bundle.json, replacer, 2);
 
-  // Format the bundle - the tab width is important because we use it when getting line
-  // numbers for the resources
-  const formattedBundle = JSON.stringify(JSON.parse(orderedBundle), null, 2);
-
-  return formattedBundle;
+  return orderedBundle;
 }
 
 function sortFhirProperties(value: any): { [id: string]: any} {
@@ -88,8 +84,8 @@ function sortFhirProperties(value: any): { [id: string]: any} {
 
   const resourceTypeIndex = keys.indexOf('resourceType');
   if (resourceTypeIndex > -1) {
-    const idItem = keys.splice(resourceTypeIndex, 1);
-    keys.splice(0, 0, idItem[0]);
+    const resourceTypeItem = keys.splice(resourceTypeIndex, 1);
+    keys.splice(0, 0, resourceTypeItem[0]);
   }
 
   return keys.reduce((sorted: { [id: string]: any }, key) => {
@@ -112,39 +108,11 @@ async function displayBundles(bundleA: string, fileNameA: string, bundleB: strin
   const newDocumentB = await vscode.workspace.openTextDocument(tempFileB.name);
   const editorB = await vscode.window.showTextDocument(newDocumentB, vscode.ViewColumn.Two);
 
-
-  // await editor.edit(editBuilder => {
-  //   editBuilder.insert(new vscode.Position(0, 0), bundleA);
-  // });
-  // await vscode.commands.executeCommand('editor.action.formatDocument');
-  // const topPosition = new vscode.Position(0, 0);
-  // editor.revealRange(new vscode.Range(topPosition, topPosition));
-
+  // Other things I tried, but don't work quite right:
 
   // The splitEditorInGroup command is promising, but it displays the same document in both editors
+  // You can't have 2 different documents. However, the two halves of the editor scroll independently.
   // await vscode.commands.executeCommand('workbench.action.splitEditorInGroup');
-
-  // const editor2 = vscode.window.visibleTextEditors[1];
-
-  // const document = editor.document;
-  // const entireRange = new vscode.Range(
-  //     new vscode.Position(0, 0),
-  //     new vscode.Position(document.lineCount - 1, document.lineAt(document.lineCount - 1).text.length)
-  // );
-  // await editor2.edit(editBuilder => {
-  //     editBuilder.delete(entireRange);
-  //     editBuilder.insert(new vscode.Position(0, 0), bundleB);
-  // });
-  // await vscode.commands.executeCommand('editor.action.formatDocument');
-  // editor2.revealRange(new vscode.Range(topPosition, topPosition));
-
-  // To use the built-in diff command, let's store the two files in a temp directory and then open them in the diff window
-  // Create a temporary file
-
-
-
-  // const leftDocumentUri = vscode.Uri.file(tempFileA.name);
-  // const rightDocumentUri = vscode.Uri.file(tempFileB.name);
 
   // The vscode.diff command is interesting, but I can't scroll the two halves independently, and the diff of course
   // doesn't know which resources are equivalent between A and B, so the overall effect is confusing.
