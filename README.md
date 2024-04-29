@@ -29,4 +29,7 @@ If your FHIR bundle is not well-formatted, the resource highlighting may be off.
 
 Initial release
 
+## Contact Us
+For questions or more information visit [CareEvolution](https://careevolution.com "CareEvolution") or email <info@careevolution.com>
+
 **Enjoy!**

@@ -2,7 +2,16 @@
   "name": "fhir-extension",
   "displayName": "fhir-extension",
   "description": "Tools for working with fhir bundles",
-  "version": "0.0.2",
+  "author": {
+    "email": "info@careevolution.com",
+    "name": "CareEvolution"
+  },
+  "repository": {
+    "url": "https://github.com/CareEvolution/fhir-vs-code-extension"
+  },
+  "license": "ISC",
+  "publisher": "CareEvolution",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -13,6 +22,7 @@
     "onLanguage:json"
   ],
   "main": "./out/extension.js",
+  "icon": "./images/careevolution-logo.png",
   "contributes": {
     "commands": [
       {
@@ -48,9 +58,6 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
-  },
-  "repository": {
-    "url": "https://github.com/CareEvolution/fhir-vs-code-extension"
   },
   "devDependencies": {
     "@types/fhir": "^0.0.41",
