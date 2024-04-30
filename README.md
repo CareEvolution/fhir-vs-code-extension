@@ -1,19 +1,21 @@
-# FHIR Tools -- by CareEvolution
+# CareEvolutioin FHIR Tools
 
-This extension provides some tools for working with FHIR bundles.
+This extension provides tools for working with FHIR bundles.
 
 ## Features
 
-The tools currently available are:
+This extension adds a FHIR Resources tree view to the primary sidebar that shows you all of the resources that appear in the FHIR bundle in the active window. If you click on a resource identifier in the tree, we scroll to and highlight that resource in the bundle.
 
-- Minify bundle: Removes all the extraneous white space from a FHIR bundle, to make it as small as possible. This is useful if you're sending your bundle to an API that has a size limit.
-- Compare bundles: Lines up 2 bundles side-by-side and orders each resource's properties so that you can see what is similar and what is different between them.
+![Tree View](./images/tree-view.png)
 
-Use the command pallette to access these tools. 
 
-In addition, this extension adds a tree view in the primary sidebar that shows you all of the individual resources that appear in the FHIR bundle. If you click on a resource identifier in the tree, we scroll to and highlight that resource in the bundle.
+The tools include the following commands:
 
-![Tree View](images/tree-view.png)
+- **FHIR: Minify bundle**: Removes all the extraneous white space from a FHIR bundle to make it as small as possible. This is useful if you're sending your bundle to an API that has a size limit.
+- **FHIR: Compare active file with...**: Lines up 2 bundles side-by-side and sorts the resources and their properties so that you can compare them and see what is similar and what is different between them. When comparing 2 bundles, The FHIR Resources tree view includes resources from both bundles, indicating which ones are in bundle A only, bundle B only, or in both A and B.
+
+Use the command palette (View -> Command Palette... or Ctrl + Shift + P) to access these commands. 
+
 
 ## Requirements
 

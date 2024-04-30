@@ -7,7 +7,13 @@
     "name": "CareEvolution"
   },
   "repository": {
+    "type": "git",
     "url": "https://github.com/CareEvolution/fhir-vs-code-extension"
+  },
+  "homepage": "https://careevolution.com",
+  "bugs": {
+    "url": "https://github.com/CareEvolution/fhir-vs-code-extension/issues",
+    "email": "info@careevolution.com"
   },
   "license": "ISC",
   "publisher": "CareEvolution",
@@ -18,6 +24,7 @@
   "categories": [
     "Other"
   ],
+  "keywords": ["FHIR"],
   "activationEvents": [
     "onLanguage:json"
   ],
