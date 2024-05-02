@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { getAllVisibleBundles } from './get-bundle';
 import { Bundle, FhirResource } from 'fhir/r4';
-import { fhir_bundles_match } from '@careevolution/fhir-diff';
-var jsonMap = require('json-source-map');
+import { fhirBundlesMatch } from '@careevolution/fhir-diff';
+const jsonMap = require('json-source-map');
 
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
 
@@ -143,7 +143,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     this.lineNumberDictionaryA = {};
     this.lineNumberDictionaryB = {};
 
-    const diffInfo = fhir_bundles_match(bundleA, bundleB);
+    const diffInfo = fhirBundlesMatch(bundleA, bundleB);
     if (!diffInfo) { return []; }
 
     this.fillLineNumberDictionary(vscode.window.visibleTextEditors[0].document, this.lineNumberDictionaryA);

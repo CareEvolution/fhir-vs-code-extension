@@ -17,14 +17,16 @@
   },
   "license": "ISC",
   "publisher": "CareEvolution",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.88.0"
   },
   "categories": [
     "Other"
   ],
-  "keywords": ["FHIR"],
+  "keywords": [
+    "FHIR"
+  ],
   "activationEvents": [
     "onLanguage:json"
   ],
@@ -80,7 +82,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@careevolution/fhir-diff": "^0.0.0-hackathon008",
+    "@careevolution/fhir-diff": "^1.0.0",
     "json-source-map": "^0.6.1",
     "tmp": "^0.2.3"
   }
