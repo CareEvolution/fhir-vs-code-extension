@@ -49,16 +49,81 @@
       {
         "command": "fhir-extension.compareWith",
         "title": "FHIR: Compare Active File With..."
+      },
+      {
+        "command": "fhir-extension.toggleAOnlyOn",
+        "title": "Not showing resources that appear in A only. Click to show them.",
+        "shortTitle": "A"
+      },
+      {
+        "command": "fhir-extension.toggleAOnlyOff",
+        "title": "Showing resources that appear in A only. Click to hide them.",
+        "shortTitle": "✓A"
+      },
+      {
+        "command": "fhir-extension.toggleBOnlyOn",
+        "title": "Not showing resources that appear in B only. Click to show them.",
+        "shortTitle": "B"
+      },
+      {
+        "command": "fhir-extension.toggleBOnlyOff",
+        "title": "Showing resources that appear in B only. Click to hide them.",
+        "shortTitle": "✓B"
+      },
+      {
+        "command": "fhir-extension.toggleAAndBOn",
+        "title": "Not showing resources that appear in both A and B. Click to show them.",
+        "shortTitle": "A&B"
+      },
+      {
+        "command": "fhir-extension.toggleAAndBOff",
+        "title": "Showing resources that appear in both A and B. Click to hide them.",
+        "shortTitle": "✓A&B"
       }
     ],
     "views": {
       "explorer": [
         {
           "id": "fhirResources",
-          "name": "FHIR Resources"
+          "name": "FHIR Resources",
+          "when": "resourceLangId == json || resourceLangId == unknown"
         }
       ]
-    }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "fhir-extension.toggleAOnlyOn",
+          "when": "view == fhirResources && fhir-extension.isDiff && !fhir-extension.showA",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fhir-extension.toggleAOnlyOff",
+          "when": "view == fhirResources && fhir-extension.isDiff && fhir-extension.showA",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fhir-extension.toggleBOnlyOn",
+          "when": "view == fhirResources && fhir-extension.isDiff && !fhir-extension.showB",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fhir-extension.toggleBOnlyOff",
+          "when": "view == fhirResources && fhir-extension.isDiff && fhir-extension.showB",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fhir-extension.toggleAAndBOn",
+          "when": "view == fhirResources && fhir-extension.isDiff && !fhir-extension.showAB",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fhir-extension.toggleAAndBOff",
+          "when": "view == fhirResources && fhir-extension.isDiff && fhir-extension.showAB",
+          "group": "navigation@3"
+        }
+      ]
+    }  
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

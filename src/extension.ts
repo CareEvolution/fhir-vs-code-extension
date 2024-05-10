@@ -24,7 +24,6 @@ export function activate(context: vscode.ExtensionContext) {
     'fhirResources',
     bundleResourcesTreeProvider
   );
-
 }
 
 export function deactivate() {}

@@ -12,6 +12,17 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
     // Register the command that will be issued when the user clicks on a tree item
     vscode.commands.registerCommand('fhirResources.item_clicked', r => this.handleTreeItemClick(r));
+
+    vscode.commands.registerCommand('fhir-extension.toggleAOnlyOn', () => this.toggleAOnly());
+    vscode.commands.registerCommand('fhir-extension.toggleAOnlyOff', () => this.toggleAOnly());
+    vscode.commands.registerCommand('fhir-extension.toggleBOnlyOn', () => this.toggleBOnly());
+    vscode.commands.registerCommand('fhir-extension.toggleBOnlyOff', () => this.toggleBOnly());
+    vscode.commands.registerCommand('fhir-extension.toggleAAndBOn', () => this.toggleAAndB());
+    vscode.commands.registerCommand('fhir-extension.toggleAAndBOff', () => this.toggleAAndB());
+
+    vscode.commands.executeCommand('setContext', 'fhir-extension.showA', this.showAOnly);
+    vscode.commands.executeCommand('setContext', 'fhir-extension.showB', this.showBOnly);
+    vscode.commands.executeCommand('setContext', 'fhir-extension.showAB', this.showAAndB);
   }
 
   refresh(): void {
@@ -29,15 +40,35 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         this.getResourceInstances(element.label)
       );
     } else {
+      vscode.commands.executeCommand('setContext', 'fhir-extension.isDiff', false);
       const bundles = getAllVisibleBundles();
       if (bundles.length === 1) {
         return Promise.resolve(this.getResourcesFromBundle(bundles[0].json));
       } else if (bundles.length > 1) {
+        vscode.commands.executeCommand('setContext', 'fhir-extension.isDiff', true);
         return Promise.resolve(this.getDiffTree(bundles[0].json, bundles[1].json));
       } else {
         return Promise.resolve([]);
       }
     }
+  }
+
+  toggleAOnly() {
+    this.showAOnly = !this.showAOnly;
+    vscode.commands.executeCommand('setContext', 'fhir-extension.showA', this.showAOnly);
+    this.refresh();
+  }
+
+  toggleBOnly() {
+    this.showBOnly = !this.showBOnly;
+    vscode.commands.executeCommand('setContext', 'fhir-extension.showB', this.showBOnly);
+    this.refresh();
+  }
+
+  toggleAAndB() {
+    this.showAAndB = !this.showAAndB;
+    vscode.commands.executeCommand('setContext', 'fhir-extension.showAB', this.showAAndB);
+    this.refresh();
   }
 
   // Method to handle item click
@@ -153,44 +184,50 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     const bundleBResources = this.getResourceDictionary(bundleB);
 
     // Create a single dictionary with all the resources
-    diffInfo.bundle1Only.forEach( item => {
-      if (!item.reference) { return; }
-      const resource = bundleAResources.hasOwnProperty(item.reference) ? bundleAResources[item.reference] : undefined;
-      if (!resource) { return; }
-      const resourceType = resource.resourceType as string;
-      const resourceId = resource.id || '';
-      const resourceLabel = resourceId.slice(0,7) || resourceType;
-      const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
-      this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, lineNumbers);
-    });
-    diffInfo.bundle2Only.forEach( item => {
-      if (!item.reference) { return; }
-      const resource = bundleBResources.hasOwnProperty(item.reference) ? bundleBResources[item.reference] : undefined;
-      if (!resource) { return; }
-      const resourceType = resource.resourceType as string;
-      const resourceId = resource.id || '';
-      const resourceLabel = resourceId.slice(0,7) || resourceType;
-      const lineNumbers = this.lineNumberDictionaryB.hasOwnProperty(resourceId) ? this.lineNumberDictionaryB[resourceId] : undefined;
-      this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, undefined, lineNumbers);
-    });
-    diffInfo.common.forEach(item => {
-      if (!item.bundle1.reference || !item.bundle2.reference) { return; }
-      const resourceA = bundleAResources.hasOwnProperty(item.bundle1.reference) ? bundleAResources[item.bundle1.reference] : undefined;
-      const resourceB = bundleBResources.hasOwnProperty(item.bundle2.reference) ? bundleBResources[item.bundle2.reference] : undefined;
-      if (!resourceA || !resourceB) { return; }
-      const resourceTypeA = resourceA.resourceType;
-      const resourceTypeB = resourceB.resourceType;
-      const resourceAId = resourceA.id || '';
-      const resourceBId = resourceB.id || '';
-      const resourceLabel = `${resourceAId.slice(0,7) || resourceTypeA} - ${resourceBId.slice(0,7) || resourceTypeB}`;
-      const lineNumbersA = this.lineNumberDictionaryA.hasOwnProperty(resourceAId) ? this.lineNumberDictionaryA[resourceAId] : undefined;
-      const lineNumbersB = this.lineNumberDictionaryB.hasOwnProperty(resourceBId) ? this.lineNumberDictionaryB[resourceBId] : undefined;
-      if (resourceTypeA === resourceTypeB) {
-        this.addResourceToResourceTypes(resourceTypeA, resourceLabel, '', true, lineNumbersA, lineNumbersB);
-      } else {
-        this.addResourceToResourceTypes(`${resourceTypeA} - ${resourceTypeB}`, resourceLabel, '', true, lineNumbersA, lineNumbersB);
-      }
-    });
+    if (this.showAOnly) {
+      diffInfo.bundle1Only.forEach( item => {
+        if (!item.reference) { return; }
+        const resource = bundleAResources.hasOwnProperty(item.reference) ? bundleAResources[item.reference] : undefined;
+        if (!resource) { return; }
+        const resourceType = resource.resourceType as string;
+        const resourceId = resource.id || '';
+        const resourceLabel = resourceId.slice(0,7) || resourceType;
+        const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
+        this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, lineNumbers);
+      });
+    }
+    if (this.showBOnly) {
+      diffInfo.bundle2Only.forEach( item => {
+        if (!item.reference) { return; }
+        const resource = bundleBResources.hasOwnProperty(item.reference) ? bundleBResources[item.reference] : undefined;
+        if (!resource) { return; }
+        const resourceType = resource.resourceType as string;
+        const resourceId = resource.id || '';
+        const resourceLabel = resourceId.slice(0,7) || resourceType;
+        const lineNumbers = this.lineNumberDictionaryB.hasOwnProperty(resourceId) ? this.lineNumberDictionaryB[resourceId] : undefined;
+        this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, undefined, lineNumbers);
+      });
+    }
+    if (this.showAAndB) {
+      diffInfo.common.forEach(item => {
+        if (!item.bundle1.reference || !item.bundle2.reference) { return; }
+        const resourceA = bundleAResources.hasOwnProperty(item.bundle1.reference) ? bundleAResources[item.bundle1.reference] : undefined;
+        const resourceB = bundleBResources.hasOwnProperty(item.bundle2.reference) ? bundleBResources[item.bundle2.reference] : undefined;
+        if (!resourceA || !resourceB) { return; }
+        const resourceTypeA = resourceA.resourceType;
+        const resourceTypeB = resourceB.resourceType;
+        const resourceAId = resourceA.id || '';
+        const resourceBId = resourceB.id || '';
+        const resourceLabel = `${resourceAId.slice(0,7) || resourceTypeA} - ${resourceBId.slice(0,7) || resourceTypeB}`;
+        const lineNumbersA = this.lineNumberDictionaryA.hasOwnProperty(resourceAId) ? this.lineNumberDictionaryA[resourceAId] : undefined;
+        const lineNumbersB = this.lineNumberDictionaryB.hasOwnProperty(resourceBId) ? this.lineNumberDictionaryB[resourceBId] : undefined;
+        if (resourceTypeA === resourceTypeB) {
+          this.addResourceToResourceTypes(resourceTypeA, resourceLabel, '', true, lineNumbersA, lineNumbersB);
+        } else {
+          this.addResourceToResourceTypes(`${resourceTypeA} - ${resourceTypeB}`, resourceLabel, '', true, lineNumbersA, lineNumbersB);
+        }
+      });
+    }
 
     // Order the resource types alphabetically
     const sortedResourceTypes = Object.keys(this.resourceTypes).sort();
@@ -270,6 +307,10 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
   private _onDidChangeTreeData: vscode.EventEmitter<FhirResourceTreeItem | undefined | null | void> = 
     new vscode.EventEmitter<FhirResourceTreeItem | undefined | null | void>();
+
+  private showAOnly = true;
+  private showBOnly = true;
+  private showAAndB = true;
 
   readonly onDidChangeTreeData: vscode.Event<FhirResourceTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 }
