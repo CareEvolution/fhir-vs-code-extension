@@ -82,7 +82,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@careevolution/fhir-diff": "^1.0.0",
+    "@careevolution/fhir-diff": "^1.0.3",
     "json-source-map": "^0.6.1",
     "tmp": "^0.2.3"
   }
