@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getAllVisibleBundles } from './get-bundle';
-import { Bundle, FhirResource } from 'fhir/r4';
+import { Bundle, BundleEntry, FhirResource } from 'fhir/r4';
 import { fhirBundlesMatch } from '@careevolution/fhir-diff';
 const jsonMap = require('json-source-map');
 
@@ -125,16 +125,16 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     this.fillLineNumberDictionary(document, this.lineNumberDictionaryA);
 
     // Create a dictionary with all the resources
-    json.entry.forEach( entry => {
+    for (let entry of json.entry) {
       const resource = entry.resource;
-      if (resource) {
-        const resourceType = resource.resourceType as string;
-        const resourceId = resource.id || '';
-        const resourceLabel = resourceId.slice(0,7) || resourceType;
-        const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
-        this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, false, lineNumbers);
-      }
-    });
+      if (!resource) { continue; }
+      const resourceType = resource.resourceType as string;
+      const resourceId = this.getResourceIdentifier(entry);
+      if (!resourceId) { continue; }
+      const resourceLabel = this.getResourceIdLabel(resourceId) || resourceType;
+      const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
+      this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, false, lineNumbers);
+    };
 
     // Order the resource types alphabetically
     const sortedResourceTypes = Object.keys(this.resourceTypes).sort();
@@ -185,40 +185,43 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
     // Create a single dictionary with all the resources
     if (this.showAOnly) {
-      diffInfo.bundle1Only.forEach( item => {
-        if (!item.reference) { return; }
-        const resource = bundleAResources.hasOwnProperty(item.reference) ? bundleAResources[item.reference] : undefined;
-        if (!resource) { return; }
-        const resourceType = resource.resourceType as string;
-        const resourceId = resource.id || '';
-        const resourceLabel = resourceId.slice(0,7) || resourceType;
+      for (let item of diffInfo.bundle1Only) {
+        if (!item.reference) { continue; }
+        const entry = bundleAResources.hasOwnProperty(item.reference) ? bundleAResources[item.reference] : undefined;
+        if (!entry || !entry.resource) { continue; }
+        const resourceType = entry.resource.resourceType as string;
+        const resourceId = this.getResourceIdentifier(entry);
+        if (!resourceId) { continue; }
+        const resourceLabel = this.getResourceIdLabel(resourceId) || resourceType;
         const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
         this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, lineNumbers);
-      });
+      };
     }
     if (this.showBOnly) {
-      diffInfo.bundle2Only.forEach( item => {
-        if (!item.reference) { return; }
-        const resource = bundleBResources.hasOwnProperty(item.reference) ? bundleBResources[item.reference] : undefined;
-        if (!resource) { return; }
-        const resourceType = resource.resourceType as string;
-        const resourceId = resource.id || '';
-        const resourceLabel = resourceId.slice(0,7) || resourceType;
+      for (let item of diffInfo.bundle2Only) {
+        if (!item.reference) { continue; }
+        const entry = bundleBResources.hasOwnProperty(item.reference) ? bundleBResources[item.reference] : undefined;
+        if (!entry || !entry.resource) { continue; }
+        const resourceType = entry.resource.resourceType as string;
+        const resourceId = this.getResourceIdentifier(entry);
+        if (!resourceId) { continue; }
+        const resourceLabel = this.getResourceIdLabel(resourceId) || resourceType;
         const lineNumbers = this.lineNumberDictionaryB.hasOwnProperty(resourceId) ? this.lineNumberDictionaryB[resourceId] : undefined;
         this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, undefined, lineNumbers);
-      });
+      };
     }
     if (this.showAAndB) {
-      diffInfo.common.forEach(item => {
-        if (!item.bundle1.reference || !item.bundle2.reference) { return; }
-        const resourceA = bundleAResources.hasOwnProperty(item.bundle1.reference) ? bundleAResources[item.bundle1.reference] : undefined;
-        const resourceB = bundleBResources.hasOwnProperty(item.bundle2.reference) ? bundleBResources[item.bundle2.reference] : undefined;
-        if (!resourceA || !resourceB) { return; }
-        const resourceTypeA = resourceA.resourceType;
-        const resourceTypeB = resourceB.resourceType;
-        const resourceAId = resourceA.id || '';
-        const resourceBId = resourceB.id || '';
-        const resourceLabel = `${resourceAId.slice(0,7) || resourceTypeA} - ${resourceBId.slice(0,7) || resourceTypeB}`;
+      for (let item of diffInfo.common) {
+        if (!item.bundle1.reference || !item.bundle2.reference) { continue; }
+        const entryA = bundleAResources.hasOwnProperty(item.bundle1.reference) ? bundleAResources[item.bundle1.reference] : undefined;
+        const entryB = bundleBResources.hasOwnProperty(item.bundle2.reference) ? bundleBResources[item.bundle2.reference] : undefined;
+        if (!entryA || !entryA.resource || !entryB || !entryB.resource) { continue; }
+        const resourceTypeA = entryA.resource.resourceType;
+        const resourceTypeB = entryB.resource.resourceType;
+        const resourceAId = this.getResourceIdentifier(entryA);
+        const resourceBId = this.getResourceIdentifier(entryB);
+        if (!resourceAId || !resourceBId) { continue; }
+        const resourceLabel = `${this.getResourceIdLabel(resourceAId) || resourceTypeA} - ${this.getResourceIdLabel(resourceBId) || resourceTypeB}`;
         const lineNumbersA = this.lineNumberDictionaryA.hasOwnProperty(resourceAId) ? this.lineNumberDictionaryA[resourceAId] : undefined;
         const lineNumbersB = this.lineNumberDictionaryB.hasOwnProperty(resourceBId) ? this.lineNumberDictionaryB[resourceBId] : undefined;
         if (resourceTypeA === resourceTypeB) {
@@ -226,7 +229,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         } else {
           this.addResourceToResourceTypes(`${resourceTypeA} - ${resourceTypeB}`, resourceLabel, '', true, lineNumbersA, lineNumbersB);
         }
-      });
+      };
     }
 
     // Order the resource types alphabetically
@@ -242,13 +245,14 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     );
   }
 
-  private getResourceDictionary(bundle: Bundle): { [id: string]: FhirResource } {
-    const bundleResources: { [id: string]: FhirResource } = {};
+  private getResourceDictionary(bundle: Bundle): { [id: string]: BundleEntry<FhirResource> } {
+    const bundleResources: { [id: string]: BundleEntry<FhirResource> } = {};
     bundle.entry?.forEach(entry => {
+      // TODO: We should call a method in the fhir-diff library to get the resource reference
       const resource = entry.resource;
       if (!resource) { return; }
       const reference = `${resource.resourceType}/${resource.id}`;
-      bundleResources[reference] = resource;
+      bundleResources[reference] = entry;
     });
     return bundleResources;
   }
@@ -295,7 +299,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     for ( let ii = 0; ii < nResources; ii++) {
       const resource = jsonObject.entry[ii].resource as FhirResource;
       if (!resource) { continue; }
-      const resourceId = resource.id || '';
+      const resourceId = this.getResourceIdentifier(jsonObject.entry[ii]);
+      if (!resourceId) { continue; }
       const pointerKey = `/entry/${ii}`;
       const pointers = result.pointers.hasOwnProperty(pointerKey) ? result.pointers[pointerKey] : undefined;
       if (!pointers) { continue; }
@@ -303,6 +308,27 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const resourceEndLineNumber = pointers.valueEnd?.line || 0;
       lineNumberDictionary[resourceId] = { startLineNumber: resourceStartLineNumber, endLineNumber: resourceEndLineNumber };
     }
+  }
+
+  private getResourceIdLabel(id: string): string {
+    if (id.startsWith('urn:uuid:')) {
+      return id.slice(9, 16);
+    } else if (this.isGuid(id)) {
+      return id.slice(0,7);
+    } else {
+      return id;
+    }
+  }
+
+  private isGuid(id: string): boolean {
+    // Note: this is with or without dashes
+    const guidPattern = /^(?:\{{0,1}(?:[0-9a-fA-F]){8}(?:-){0,1}(?:[0-9a-fA-F]){4}(?:-){0,1}(?:[0-9a-fA-F]){4}(?:-){0,1}(?:[0-9a-fA-F]){4}(?:-){0,1}(?:[0-9a-fA-F]){12}\}{0,1})$/;
+    return guidPattern.test(id);
+  }
+
+  // TODO: This should come from the fhir-diff library once it is added there.
+  private getResourceIdentifier(entry: BundleEntry<FhirResource>): string | undefined | null {
+    return entry.resource?.id || entry.id || entry.fullUrl;
   }
 
   private _onDidChangeTreeData: vscode.EventEmitter<FhirResourceTreeItem | undefined | null | void> = 
