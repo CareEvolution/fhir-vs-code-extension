@@ -13,16 +13,16 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     // Register the command that will be issued when the user clicks on a tree item
     vscode.commands.registerCommand('fhirResources.item_clicked', r => this.handleTreeItemClick(r));
 
-    vscode.commands.registerCommand('fhir-extension.toggleAOnlyOn', () => this.toggleAOnly());
-    vscode.commands.registerCommand('fhir-extension.toggleAOnlyOff', () => this.toggleAOnly());
-    vscode.commands.registerCommand('fhir-extension.toggleBOnlyOn', () => this.toggleBOnly());
-    vscode.commands.registerCommand('fhir-extension.toggleBOnlyOff', () => this.toggleBOnly());
-    vscode.commands.registerCommand('fhir-extension.toggleAAndBOn', () => this.toggleAAndB());
-    vscode.commands.registerCommand('fhir-extension.toggleAAndBOff', () => this.toggleAAndB());
+    vscode.commands.registerCommand('fhir-toolkit-extension.toggleAOnlyOn', () => this.toggleAOnly());
+    vscode.commands.registerCommand('fhir-toolkit-extension.toggleAOnlyOff', () => this.toggleAOnly());
+    vscode.commands.registerCommand('fhir-toolkit-extension.toggleBOnlyOn', () => this.toggleBOnly());
+    vscode.commands.registerCommand('fhir-toolkit-extension.toggleBOnlyOff', () => this.toggleBOnly());
+    vscode.commands.registerCommand('fhir-toolkit-extension.toggleAAndBOn', () => this.toggleAAndB());
+    vscode.commands.registerCommand('fhir-toolkit-extension.toggleAAndBOff', () => this.toggleAAndB());
 
-    vscode.commands.executeCommand('setContext', 'fhir-extension.showA', this.showAOnly);
-    vscode.commands.executeCommand('setContext', 'fhir-extension.showB', this.showBOnly);
-    vscode.commands.executeCommand('setContext', 'fhir-extension.showAB', this.showAAndB);
+    vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showA', this.showAOnly);
+    vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showB', this.showBOnly);
+    vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showAB', this.showAAndB);
   }
 
   refresh(): void {
@@ -40,12 +40,12 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         this.getResourceInstances(element.label)
       );
     } else {
-      vscode.commands.executeCommand('setContext', 'fhir-extension.isDiff', false);
+      vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.isDiff', false);
       const bundles = getAllVisibleBundles();
       if (bundles.length === 1) {
         return Promise.resolve(this.getResourcesFromBundle(bundles[0].json));
       } else if (bundles.length > 1) {
-        vscode.commands.executeCommand('setContext', 'fhir-extension.isDiff', true);
+        vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.isDiff', true);
         return Promise.resolve(this.getDiffTree(bundles[0].json, bundles[1].json));
       } else {
         return Promise.resolve([]);
@@ -55,19 +55,19 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
   toggleAOnly() {
     this.showAOnly = !this.showAOnly;
-    vscode.commands.executeCommand('setContext', 'fhir-extension.showA', this.showAOnly);
+    vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showA', this.showAOnly);
     this.refresh();
   }
 
   toggleBOnly() {
     this.showBOnly = !this.showBOnly;
-    vscode.commands.executeCommand('setContext', 'fhir-extension.showB', this.showBOnly);
+    vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showB', this.showBOnly);
     this.refresh();
   }
 
   toggleAAndB() {
     this.showAAndB = !this.showAAndB;
-    vscode.commands.executeCommand('setContext', 'fhir-extension.showAB', this.showAAndB);
+    vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showAB', this.showAAndB);
     this.refresh();
   }
 

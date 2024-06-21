@@ -1,6 +1,6 @@
-# CareEvolution FHIR Tools
+# CareEvolution FHIR Toolkit
 
-This extension provides tools for working with FHIR bundles.
+This extension provides a toolkit for working with FHIR bundles.
 
 ## Features
 

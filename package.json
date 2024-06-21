@@ -1,7 +1,7 @@
 {
-  "name": "fhir-extension",
-  "displayName": "FHIR Tools",
-  "description": "Tools for working with FHIR bundles",
+  "name": "fhir-toolkit-extension",
+  "displayName": "FHIR Toolkit",
+  "description": "Toolkit for working with FHIR bundles",
   "author": {
     "email": "info@careevolution.com",
     "name": "CareEvolution"
@@ -35,11 +35,11 @@
   "contributes": {
     "commands": [
       {
-        "command": "fhir-extension.isBundle",
+        "command": "fhir-toolkit-extension.isBundle",
         "title": "FHIR: Is FHIR Bundle"
       },
       {
-        "command": "fhir-extension.minifyBundle",
+        "command": "fhir-toolkit-extension.minifyBundle",
         "title": "FHIR: Minify Bundle"
       },
       {
@@ -47,36 +47,36 @@
         "title": "Go to FHIR resource"
       },
       {
-        "command": "fhir-extension.compareWith",
+        "command": "fhir-toolkit-extension.compareWith",
         "title": "FHIR: Compare Active File With..."
       },
       {
-        "command": "fhir-extension.toggleAOnlyOn",
+        "command": "fhir-toolkit-extension.toggleAOnlyOn",
         "title": "Not showing resources that appear in A only. Click to show them.",
         "shortTitle": "A"
       },
       {
-        "command": "fhir-extension.toggleAOnlyOff",
+        "command": "fhir-toolkit-extension.toggleAOnlyOff",
         "title": "Showing resources that appear in A only. Click to hide them.",
         "shortTitle": "✓A"
       },
       {
-        "command": "fhir-extension.toggleBOnlyOn",
+        "command": "fhir-toolkit-extension.toggleBOnlyOn",
         "title": "Not showing resources that appear in B only. Click to show them.",
         "shortTitle": "B"
       },
       {
-        "command": "fhir-extension.toggleBOnlyOff",
+        "command": "fhir-toolkit-extension.toggleBOnlyOff",
         "title": "Showing resources that appear in B only. Click to hide them.",
         "shortTitle": "✓B"
       },
       {
-        "command": "fhir-extension.toggleAAndBOn",
+        "command": "fhir-toolkit-extension.toggleAAndBOn",
         "title": "Not showing resources that appear in both A and B. Click to show them.",
         "shortTitle": "A&B"
       },
       {
-        "command": "fhir-extension.toggleAAndBOff",
+        "command": "fhir-toolkit-extension.toggleAAndBOff",
         "title": "Showing resources that appear in both A and B. Click to hide them.",
         "shortTitle": "✓A&B"
       }
@@ -93,33 +93,33 @@
     "menus": {
       "view/title": [
         {
-          "command": "fhir-extension.toggleAOnlyOn",
-          "when": "view == fhirResources && fhir-extension.isDiff && !fhir-extension.showA",
+          "command": "fhir-toolkit-extension.toggleAOnlyOn",
+          "when": "view == fhirResources && fhir-toolkit-extension.isDiff && !fhir-toolkit-extension.showA",
           "group": "navigation@1"
         },
         {
-          "command": "fhir-extension.toggleAOnlyOff",
-          "when": "view == fhirResources && fhir-extension.isDiff && fhir-extension.showA",
+          "command": "fhir-toolkit-extension.toggleAOnlyOff",
+          "when": "view == fhirResources && fhir-toolkit-extension.isDiff && fhir-toolkit-extension.showA",
           "group": "navigation@1"
         },
         {
-          "command": "fhir-extension.toggleBOnlyOn",
-          "when": "view == fhirResources && fhir-extension.isDiff && !fhir-extension.showB",
+          "command": "fhir-toolkit-extension.toggleBOnlyOn",
+          "when": "view == fhirResources && fhir-toolkit-extension.isDiff && !fhir-toolkit-extension.showB",
           "group": "navigation@2"
         },
         {
-          "command": "fhir-extension.toggleBOnlyOff",
-          "when": "view == fhirResources && fhir-extension.isDiff && fhir-extension.showB",
+          "command": "fhir-toolkit-extension.toggleBOnlyOff",
+          "when": "view == fhirResources && fhir-toolkit-extension.isDiff && fhir-toolkit-extension.showB",
           "group": "navigation@2"
         },
         {
-          "command": "fhir-extension.toggleAAndBOn",
-          "when": "view == fhirResources && fhir-extension.isDiff && !fhir-extension.showAB",
+          "command": "fhir-toolkit-extension.toggleAAndBOn",
+          "when": "view == fhirResources && fhir-toolkit-extension.isDiff && !fhir-toolkit-extension.showAB",
           "group": "navigation@3"
         },
         {
-          "command": "fhir-extension.toggleAAndBOff",
-          "when": "view == fhirResources && fhir-extension.isDiff && fhir-extension.showAB",
+          "command": "fhir-toolkit-extension.toggleAAndBOff",
+          "when": "view == fhirResources && fhir-toolkit-extension.isDiff && fhir-toolkit-extension.showAB",
           "group": "navigation@3"
         }
       ]
