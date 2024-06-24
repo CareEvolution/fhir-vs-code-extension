@@ -17,7 +17,7 @@
   },
   "license": "ISC",
   "publisher": "CareEvolution",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -149,7 +149,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@careevolution/fhir-diff": "^1.0.4",
+    "@careevolution/fhir-diff": "^1.0.5",
     "json-source-map": "^0.6.1",
     "tmp": "^0.2.3"
   }
