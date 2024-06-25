@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getAllVisibleBundles } from './get-bundle';
-import { Bundle, BundleEntry, FhirResource } from 'fhir/r4';
-import { fhirBundlesMatch } from '@careevolution/fhir-diff';
+import { Bundle, BundleEntry, Identifier, FhirResource } from 'fhir/r4';
+import { fhirBundlesMatch, buildFhirReference } from '@careevolution/fhir-diff';
 const jsonMap = require('json-source-map');
 
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
@@ -248,11 +248,11 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
   private getResourceDictionary(bundle: Bundle): { [id: string]: BundleEntry<FhirResource> } {
     const bundleResources: { [id: string]: BundleEntry<FhirResource> } = {};
     bundle.entry?.forEach(entry => {
-      // TODO: We should call a method in the fhir-diff library to get the resource reference
       const resource = entry.resource;
       if (!resource) { return; }
-      const reference = `${resource.resourceType}/${resource.id}`;
-      bundleResources[reference] = entry;
+      const reference = buildFhirReference(entry);
+      if (!reference?.reference) { return; }
+      bundleResources[reference.reference] = entry;
     });
     return bundleResources;
   }
@@ -326,9 +326,80 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     return guidPattern.test(id);
   }
 
-  // TODO: This should come from the fhir-diff library once it is added there.
   private getResourceIdentifier(entry: BundleEntry<FhirResource>): string | undefined | null {
-    return entry.resource?.id || entry.id || entry.fullUrl;
+
+    if (!entry.resource) {
+      return undefined;
+    }
+  
+    if (entry.resource.id) {
+      return entry.resource.id;
+    }
+  
+    if (entry.fullUrl) {
+      return entry.fullUrl;
+    }
+  
+    switch (entry.resource.resourceType) {
+      case 'Patient':
+      case 'Encounter':
+      case 'Condition':
+      case 'MedicationAdministration':
+      case 'MedicationRequest':
+      case 'MedicationDispense':
+      case 'MedicationStatement':
+      case 'Medication':
+      case 'Immunization':
+      case 'Procedure':
+      case 'ServiceRequest':
+      case 'AllergyIntolerance':
+      case 'Observation':
+      case 'DiagnosticReport':
+      case 'DocumentReference':
+      case 'Practitioner':
+      case 'PractitionerRole':
+      case 'Organization':
+      case 'RelatedPerson':
+      case 'Specimen':
+      case 'CarePlan':
+      case 'Goal':
+      case 'Task':
+      case 'FamilyMemberHistory':
+      case 'Claim':
+      case 'ExplanationOfBenefit':
+      case 'Coverage':
+      case 'Device':
+      case 'Location':
+        {
+
+          const identifiers = entry.resource.identifier;
+          const identifier = this.selectIdentifier(identifiers);
+          if (identifier && identifier.value) {
+            return identifier.value;
+          }
+        }
+        break;
+      case 'QuestionnaireResponse':
+        if (entry.resource.identifier?.value) {
+          return entry.resource.identifier.value;
+        }
+        break;
+      default:
+        break;
+    }
+  
+    return undefined;
+  }
+  
+  private selectIdentifier(identifiers: Identifier[] | undefined): Identifier | undefined {
+    if (!identifiers || identifiers.length === 0) {
+      return undefined;
+    }
+    return (
+      identifiers.find((i) => i.use === 'usual') ||
+      identifiers.find((i) => i.use === 'official') ||
+      identifiers[0]
+    );
   }
 
   private _onDidChangeTreeData: vscode.EventEmitter<FhirResourceTreeItem | undefined | null | void> = 
