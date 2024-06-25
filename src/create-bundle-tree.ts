@@ -23,6 +23,15 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showA', this.showAOnly);
     vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showB', this.showBOnly);
     vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showAB', this.showAAndB);
+
+    this.setHighlightColor();
+
+    // Listen for theme changes
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration('workbench.colorTheme')) {
+          this.setHighlightColor();
+      }
+    });
   }
 
   refresh(): void {
@@ -91,6 +100,29 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     isWholeLine: true,
     backgroundColor: 'rgba(255, 255, 0, 0.3)' // Yellow highlight
   });
+
+  private setHighlightColor() {
+    const colorThemeKind = vscode.window.activeColorTheme.kind;
+    switch (colorThemeKind) {
+      case vscode.ColorThemeKind.Light:
+      case vscode.ColorThemeKind.HighContrastLight:
+          this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
+            isWholeLine: true,
+            backgroundColor: 'rgba(255, 255, 0, 0.3)'
+          });
+          break;
+      case vscode.ColorThemeKind.Dark:
+      case vscode.ColorThemeKind.HighContrast:
+          this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
+          isWholeLine: true,
+          backgroundColor: 'rgba(255, 255, 0, 0.1)'
+        });
+        break;
+      default:
+          console.log('Unknown theme.');
+          break;
+    }
+  }
 
   private clearHighlights(editor: vscode.TextEditor | undefined) {
     editor?.setDecorations(this.highlightDecorationType, []); // Pass an empty array to remove all decorations
