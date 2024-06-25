@@ -35,10 +35,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "fhir-toolkit-extension.isBundle",
-        "title": "FHIR: Is FHIR Bundle"
-      },
-      {
         "command": "fhir-toolkit-extension.minifyBundle",
         "title": "FHIR: Minify Bundle"
       },
