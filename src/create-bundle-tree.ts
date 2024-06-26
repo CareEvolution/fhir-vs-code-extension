@@ -103,22 +103,22 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     const colorThemeKind = vscode.window.activeColorTheme.kind;
     switch (colorThemeKind) {
       case vscode.ColorThemeKind.Light:
-        case vscode.ColorThemeKind.HighContrast:
-          case vscode.ColorThemeKind.HighContrastLight:
-          this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
-            isWholeLine: true,
-            backgroundColor: 'rgba(255, 255, 0, 0.3)'
-          });
-          break;
+      case vscode.ColorThemeKind.HighContrast:
+      case vscode.ColorThemeKind.HighContrastLight:
+        this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
+          isWholeLine: true,
+          backgroundColor: 'rgba(255, 255, 0, 0.3)'
+        });
+        break;
       case vscode.ColorThemeKind.Dark:
-          this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
+        this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
           isWholeLine: true,
           backgroundColor: 'rgba(255, 255, 0, 0.1)'
         });
         break;
       default:
-          console.log('Unknown theme.');
-          break;
+        console.log('Unknown theme.');
+        break;
     }
   }
 
