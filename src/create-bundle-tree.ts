@@ -6,6 +6,8 @@ const jsonMap = require('json-source-map');
 
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
 
+  private highlightDecorationType: vscode.TextEditorDecorationType | undefined;
+
   constructor() {
     // Register a listener for changes to the active text editor so that we can refresh the tree
     vscode.window.onDidChangeActiveTextEditor(this.refresh, this);
@@ -23,6 +25,15 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showA', this.showAOnly);
     vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showB', this.showBOnly);
     vscode.commands.executeCommand('setContext', 'fhir-toolkit-extension.showAB', this.showAAndB);
+
+    this.setHighlightColor();
+
+    // Listen for theme changes
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration('workbench.colorTheme')) {
+          this.setHighlightColor();
+      }
+    });
   }
 
   refresh(): void {
@@ -87,13 +98,34 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     }
   }
 
-  private highlightDecorationType = vscode.window.createTextEditorDecorationType({
-    isWholeLine: true,
-    backgroundColor: 'rgba(255, 255, 0, 0.3)' // Yellow highlight
-  });
+  private setHighlightColor() {
+    vscode.window.visibleTextEditors.forEach(te => this.clearHighlights(te));
+    const colorThemeKind = vscode.window.activeColorTheme.kind;
+    switch (colorThemeKind) {
+      case vscode.ColorThemeKind.Light:
+      case vscode.ColorThemeKind.HighContrast:
+      case vscode.ColorThemeKind.HighContrastLight:
+        this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
+          isWholeLine: true,
+          backgroundColor: 'rgba(255, 255, 0, 0.3)'
+        });
+        break;
+      case vscode.ColorThemeKind.Dark:
+        this.highlightDecorationType = vscode.window.createTextEditorDecorationType({
+          isWholeLine: true,
+          backgroundColor: 'rgba(255, 255, 0, 0.1)'
+        });
+        break;
+      default:
+        console.log('Unknown theme.');
+        break;
+    }
+  }
 
   private clearHighlights(editor: vscode.TextEditor | undefined) {
-    editor?.setDecorations(this.highlightDecorationType, []); // Pass an empty array to remove all decorations
+    if (this.highlightDecorationType) {
+      editor?.setDecorations(this.highlightDecorationType, []); // Pass an empty array to remove all decorations
+    }
   }
 
   private showResource(editor: vscode.TextEditor | undefined, startLineNumber: number | undefined, endLineNumber: number | undefined) {
@@ -104,7 +136,9 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     const range = new vscode.Range(startPosition, endPosition);
     editor.selection = new vscode.Selection(startPosition, startPosition);
     editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
-    editor.setDecorations(this.highlightDecorationType, [range]);
+    if (this.highlightDecorationType) {
+      editor.setDecorations(this.highlightDecorationType, [range]);
+    }
   }
 
   private resourceTypes: {[id: string]: FhirResourceInfo[]} = {};

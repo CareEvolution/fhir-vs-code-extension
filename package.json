@@ -17,7 +17,7 @@
   },
   "license": "ISC",
   "publisher": "CareEvolution",
-  "version": "0.0.8",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -34,10 +34,6 @@
   "icon": "./images/CE-Bug-Blk.png",
   "contributes": {
     "commands": [
-      {
-        "command": "fhir-toolkit-extension.isBundle",
-        "title": "FHIR: Is FHIR Bundle"
-      },
       {
         "command": "fhir-toolkit-extension.minifyBundle",
         "title": "FHIR: Minify Bundle"
