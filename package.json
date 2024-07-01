@@ -17,7 +17,7 @@
   },
   "license": "ISC",
   "publisher": "CareEvolution",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -31,7 +31,7 @@
     "onLanguage:json"
   ],
   "main": "./out/extension.js",
-  "icon": "./images/CE-Bug-Blk.png",
+  "icon": "./images/CE-Bug-Color.png",
   "contributes": {
     "commands": [
       {
