@@ -131,22 +131,22 @@
     "deploy": "vsce publish"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/fhir": "^0.0.41",
     "@types/mocha": "^10.0.10",
     "@types/node": "18.x",
     "@types/tmp": "^0.2.6",
     "@types/vscode": "^1.88.0",
-    "@typescript-eslint/eslint-plugin": "^7.4.0",
-    "@typescript-eslint/parser": "^7.4.0",
-    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.5.0",
-    "eslint": "^8.57.0",
-    "typescript": "^5.3.3"
+    "@vscode/vsce": "^3.7.1",
+    "eslint": "^9.39.2",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.50.1"
   },
   "dependencies": {
-    "@careevolution/fhir-diff": "^1.0.5",
+    "@careevolution/fhir-diff": "^1.0.7",
     "json-source-map": "^0.6.1",
-    "tmp": "^0.2.3"
+    "tmp": "^0.2.5"
   }
 }

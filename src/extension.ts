@@ -8,10 +8,10 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('Extension "fhir-toolkit-extension" is now active!');
 
   // Register commands
-  let minifyCommand = vscode.commands.registerCommand('fhir-toolkit-extension.minifyBundle', minifyBundle);
+  const minifyCommand = vscode.commands.registerCommand('fhir-toolkit-extension.minifyBundle', minifyBundle);
   context.subscriptions.push(minifyCommand);
 
-  let compareWithCommand = vscode.commands.registerCommand('fhir-toolkit-extension.compareWith', () => compareBundles(context));
+  const compareWithCommand = vscode.commands.registerCommand('fhir-toolkit-extension.compareWith', compareBundles);
   context.subscriptions.push(compareWithCommand);
 
   // Register tree data provider
