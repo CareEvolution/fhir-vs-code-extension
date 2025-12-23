@@ -89,7 +89,7 @@ function sortFhirProperties(value: object): { [id: string]: never} {
   }
 
   return keys.reduce((sorted: { [id: string]: never }, key) => {
-    sorted[key] =  value[key as keyof typeof value];
+    sorted[key] = value[key as keyof typeof value];
     return sorted;
   }, {});
 }
