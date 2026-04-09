@@ -5,7 +5,7 @@ import * as tmp from 'tmp';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export async function compareBundles(context: vscode.ExtensionContext)
+export async function compareBundles()
 {
   // Get a bundle to compare to - we offer up files in the open tabs
   const tabGroups = vscode.window.tabGroups;
@@ -44,7 +44,7 @@ export async function compareBundles(context: vscode.ExtensionContext)
   }
 
   // And then I'm opening them in side-by-side windows that scroll independently.
-  await displayBundles(orderedBundleA!, path.parse(documentA.fileName).base || '', orderedBundleB!, selectedItem.label, context);
+  await displayBundles(orderedBundleA!, path.parse(documentA.fileName).base || '', orderedBundleB!, selectedItem.label);
 }
 
 function createComparableBundle(document: vscode.TextDocument): string | undefined {
@@ -62,7 +62,7 @@ function createComparableBundle(document: vscode.TextDocument): string | undefin
   });
 
   // Alphabetize the order of the properties for each json object in the bundle
-  const replacer = (key: string, value: any) =>
+  const replacer = (key: string, value: unknown) =>
     value instanceof Object && !(value instanceof Array)
     ? sortFhirProperties(value) 
     : value;
@@ -72,9 +72,9 @@ function createComparableBundle(document: vscode.TextDocument): string | undefin
   return orderedBundle;
 }
 
-function sortFhirProperties(value: any): { [id: string]: any} {
+function sortFhirProperties(value: object): { [id: string]: never} {
 
-  let keys = Object.keys(value).sort();
+  const keys = Object.keys(value).sort();
 
   const idIndex = keys.indexOf('id');
   if (idIndex > -1) {
@@ -88,13 +88,13 @@ function sortFhirProperties(value: any): { [id: string]: any} {
     keys.splice(0, 0, resourceTypeItem[0]);
   }
 
-  return keys.reduce((sorted: { [id: string]: any }, key) => {
-    sorted[key] = value[key];
+  return keys.reduce((sorted: { [id: string]: never }, key) => {
+    sorted[key] = value[key as keyof typeof value];
     return sorted;
   }, {});
 }
 
-async function displayBundles(bundleA: string, fileNameA: string, bundleB: string, fileNameB: string, context: vscode.ExtensionContext) {
+async function displayBundles(bundleA: string, fileNameA: string, bundleB: string, fileNameB: string) {
 
   const tempFileA = tmp.fileSync({ prefix: path.parse(fileNameA).name, postfix: '.json' });
   fs.writeFileSync(tempFileA.name, bundleA);
@@ -103,10 +103,10 @@ async function displayBundles(bundleA: string, fileNameA: string, bundleB: strin
   fs.writeFileSync(tempFileB.name, bundleB);
 
   const newDocumentA = await vscode.workspace.openTextDocument(tempFileA.name);
-  const editorA = await vscode.window.showTextDocument(newDocumentA, vscode.ViewColumn.One);
+  await vscode.window.showTextDocument(newDocumentA, vscode.ViewColumn.One);
 
   const newDocumentB = await vscode.workspace.openTextDocument(tempFileB.name);
-  const editorB = await vscode.window.showTextDocument(newDocumentB, vscode.ViewColumn.Two);
+  await vscode.window.showTextDocument(newDocumentB, vscode.ViewColumn.Two);
 
   // Other things I tried, but don't work quite right:
 

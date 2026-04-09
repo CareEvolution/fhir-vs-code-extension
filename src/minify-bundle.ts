@@ -8,5 +8,5 @@ export async function minifyBundle()
   
   const minifiedBundle = JSON.stringify(bundleInfo.json);
   const document = await vscode.workspace.openTextDocument({ language: 'json', content: minifiedBundle });
-  const editor = await vscode.window.showTextDocument(document);
+  await vscode.window.showTextDocument(document);
 }

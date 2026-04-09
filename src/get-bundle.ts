@@ -31,12 +31,12 @@ export function getBundleFromDocument(document: vscode.TextDocument): { json: Bu
   let parsedContents;
   try {
     parsedContents = JSON.parse(documentText);
-  } catch (jsonError) {
+  } catch {
     return;
   }
 
   // Parsed object is a FHIR resource bundle
-  if (parsedContents.hasOwnProperty('resourceType') && parsedContents.resourceType === 'Bundle') {
+  if (Object.hasOwn(parsedContents, 'resourceType') && parsedContents.resourceType === 'Bundle') {
     return { json: parsedContents as Bundle, fileName: documentFileName };
   }
 

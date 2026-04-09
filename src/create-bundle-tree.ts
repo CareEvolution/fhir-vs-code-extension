@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getAllVisibleBundles } from './get-bundle';
 import { Bundle, BundleEntry, Identifier, FhirResource } from 'fhir/r4';
 import { fhirBundlesMatch, buildFhirReference } from '@careevolution/fhir-diff';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const jsonMap = require('json-source-map');
 
 export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<FhirResourceTreeItem> {
@@ -159,14 +160,14 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
     this.fillLineNumberDictionary(document, this.lineNumberDictionaryA);
 
     // Create a dictionary with all the resources
-    for (let entry of json.entry) {
+    for (const entry of json.entry) {
       const resource = entry.resource;
       if (!resource) { continue; }
       const resourceType = resource.resourceType as string;
       const resourceId = this.getResourceIdentifier(entry);
       if (!resourceId) { continue; }
       const resourceLabel = this.getResourceIdLabel(resourceId) || resourceType;
-      const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
+      const lineNumbers = Object.hasOwn(this.lineNumberDictionaryA, resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
       this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, false, lineNumbers);
     };
 
@@ -186,7 +187,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
   private getResourceInstances( resourceType: string ): FhirResourceTreeItem[] {
 
     // Get the entries corresponding to the resource type
-    var resourceInstances = this.resourceTypes.hasOwnProperty(resourceType) ? this.resourceTypes[resourceType] : [];
+    const resourceInstances = Object.hasOwn(this.resourceTypes, resourceType) ? this.resourceTypes[resourceType] : [];
     return resourceInstances
       .map( resourceInfo => {
         return new FhirResourceTreeItem(
@@ -219,36 +220,36 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
 
     // Create a single dictionary with all the resources
     if (this.showAOnly) {
-      for (let item of diffInfo.bundle1Only) {
+      for (const item of diffInfo.bundle1Only) {
         if (!item.reference) { continue; }
-        const entry = bundleAResources.hasOwnProperty(item.reference) ? bundleAResources[item.reference] : undefined;
+        const entry = Object.hasOwn(bundleAResources, item.reference) ? bundleAResources[item.reference] : undefined;
         if (!entry || !entry.resource) { continue; }
         const resourceType = entry.resource.resourceType as string;
         const resourceId = this.getResourceIdentifier(entry);
         if (!resourceId) { continue; }
         const resourceLabel = this.getResourceIdLabel(resourceId) || resourceType;
-        const lineNumbers = this.lineNumberDictionaryA.hasOwnProperty(resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
+        const lineNumbers = Object.hasOwn(this.lineNumberDictionaryA, resourceId) ? this.lineNumberDictionaryA[resourceId] : undefined;
         this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, lineNumbers);
       };
     }
     if (this.showBOnly) {
-      for (let item of diffInfo.bundle2Only) {
+      for (const item of diffInfo.bundle2Only) {
         if (!item.reference) { continue; }
-        const entry = bundleBResources.hasOwnProperty(item.reference) ? bundleBResources[item.reference] : undefined;
+        const entry = Object.hasOwn(bundleBResources, item.reference) ? bundleBResources[item.reference] : undefined;
         if (!entry || !entry.resource) { continue; }
         const resourceType = entry.resource.resourceType as string;
         const resourceId = this.getResourceIdentifier(entry);
         if (!resourceId) { continue; }
         const resourceLabel = this.getResourceIdLabel(resourceId) || resourceType;
-        const lineNumbers = this.lineNumberDictionaryB.hasOwnProperty(resourceId) ? this.lineNumberDictionaryB[resourceId] : undefined;
+        const lineNumbers = Object.hasOwn(this.lineNumberDictionaryB, resourceId) ? this.lineNumberDictionaryB[resourceId] : undefined;
         this.addResourceToResourceTypes(resourceType, resourceLabel, resourceId, true, undefined, lineNumbers);
       };
     }
     if (this.showAAndB) {
-      for (let item of diffInfo.common) {
+      for (const item of diffInfo.common) {
         if (!item.bundle1.reference || !item.bundle2.reference) { continue; }
-        const entryA = bundleAResources.hasOwnProperty(item.bundle1.reference) ? bundleAResources[item.bundle1.reference] : undefined;
-        const entryB = bundleBResources.hasOwnProperty(item.bundle2.reference) ? bundleBResources[item.bundle2.reference] : undefined;
+        const entryA = Object.hasOwn(bundleAResources, item.bundle1.reference) ? bundleAResources[item.bundle1.reference] : undefined;
+        const entryB = Object.hasOwn(bundleBResources, item.bundle2.reference) ? bundleBResources[item.bundle2.reference] : undefined;
         if (!entryA || !entryA.resource || !entryB || !entryB.resource) { continue; }
         const resourceTypeA = entryA.resource.resourceType;
         const resourceTypeB = entryB.resource.resourceType;
@@ -256,8 +257,8 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         const resourceBId = this.getResourceIdentifier(entryB);
         if (!resourceAId || !resourceBId) { continue; }
         const resourceLabel = `${this.getResourceIdLabel(resourceAId) || resourceTypeA} - ${this.getResourceIdLabel(resourceBId) || resourceTypeB}`;
-        const lineNumbersA = this.lineNumberDictionaryA.hasOwnProperty(resourceAId) ? this.lineNumberDictionaryA[resourceAId] : undefined;
-        const lineNumbersB = this.lineNumberDictionaryB.hasOwnProperty(resourceBId) ? this.lineNumberDictionaryB[resourceBId] : undefined;
+        const lineNumbersA = Object.hasOwn(this.lineNumberDictionaryA, resourceAId) ? this.lineNumberDictionaryA[resourceAId] : undefined;
+        const lineNumbersB = Object.hasOwn(this.lineNumberDictionaryB, resourceBId) ? this.lineNumberDictionaryB[resourceBId] : undefined;
         if (resourceTypeA === resourceTypeB) {
           this.addResourceToResourceTypes(resourceTypeA, resourceLabel, '', true, lineNumbersA, lineNumbersB);
         } else {
@@ -310,7 +311,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
         lineNumberB: lineNumbersB?.startLineNumber,
         endLineNumberB: lineNumbersB?.endLineNumber,
        };
-      if (!this.resourceTypes.hasOwnProperty(resourceType)){
+      if (!Object.hasOwn(this.resourceTypes, resourceType)){
         this.resourceTypes[resourceType] = [ resourceInfo ];
       } else {
         this.resourceTypes[resourceType].push(resourceInfo);
@@ -336,7 +337,7 @@ export class BundleResourcesTreeProvider implements vscode.TreeDataProvider<Fhir
       const resourceId = this.getResourceIdentifier(jsonObject.entry[ii]);
       if (!resourceId) { continue; }
       const pointerKey = `/entry/${ii}`;
-      const pointers = result.pointers.hasOwnProperty(pointerKey) ? result.pointers[pointerKey] : undefined;
+      const pointers = Object.hasOwn(result.pointers, pointerKey) ? result.pointers[pointerKey] : undefined;
       if (!pointers) { continue; }
       const resourceStartLineNumber = pointers.value?.line || 0;
       const resourceEndLineNumber = pointers.valueEnd?.line || 0;
