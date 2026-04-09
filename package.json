@@ -17,9 +17,9 @@
   },
   "license": "ISC",
   "publisher": "CareEvolution",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "engines": {
-    "vscode": "^1.88.0"
+    "vscode": "^1.107.0"
   },
   "categories": [
     "Other"
